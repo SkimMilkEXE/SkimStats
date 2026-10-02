@@ -28,6 +28,20 @@ public static class Win32Interop
 
     private const uint LWA_ALPHA = 0x2;
 
+    // global hotkeys, windows sends WM_HOTKEY to hwnd when pressed anywhere
+    public const int WM_HOTKEY = 0x0312;
+    public const uint MOD_CONTROL = 0x2;
+    public const uint MOD_SHIFT = 0x4;
+    public const uint MOD_NOREPEAT = 0x4000; // holding the keys down doesn't spam the event
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool RegisterHotKey(IntPtr hwnd, int id, uint modifiers, uint virtualKey);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool UnregisterHotKey(IntPtr hwnd, int id);
+
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool SetLayeredWindowAttributes(IntPtr hwnd, uint colorKey, byte alpha, uint flags);
