@@ -26,6 +26,15 @@
             <Setter Property="Width" Value="60" />
             <Setter Property="Margin" Value="0,0,8,0" />
         </Style>
+        <!-- grip on the right edge for resizing, only in edit mode -->
+        <Style Selector="Border#ResizeGrip">
+            <Setter Property="Width" Value="6" />
+            <Setter Property="Margin" Value="0,2,-9,2" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="Background" Value="DodgerBlue" />
+            <Setter Property="Cursor" Value="SizeWestEast" />
+        </Style>
         <!-- outline + move cursor so it's obvious the overlay can be dragged -->
         <Style Selector="Border#Root.editing">
             <Setter Property="BorderBrush" Value="DodgerBlue" />
@@ -38,38 +47,42 @@
             Background="{Binding BackgroundBrush}"
             BorderBrush="Transparent" BorderThickness="2"
             CornerRadius="6" Padding="10,6">
-        <StackPanel Spacing="2">
-            <StackPanel Orientation="Horizontal" IsVisible="{Binding Settings.ShowFps}">
-                <c:Sparkline Values="{Binding FpsHistory}" Stroke="{Binding TextBrush}"
-                             Height="{Binding Settings.FontSize}" IsVisible="{Binding Settings.FpsGraph}" />
-                <TextBlock Text="{Binding FpsText}" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" IsVisible="{Binding Settings.ShowCpu}">
-                <c:Sparkline Values="{Binding CpuHistory}" Maximum="100" Stroke="{Binding TextBrush}"
-                             Height="{Binding Settings.FontSize}" IsVisible="{Binding Settings.CpuGraph}" />
-                <TextBlock Text="{Binding CpuText}" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" IsVisible="{Binding Settings.ShowGpu}">
-                <c:Sparkline Values="{Binding GpuHistory}" Maximum="100" Stroke="{Binding TextBrush}"
-                             Height="{Binding Settings.FontSize}" IsVisible="{Binding Settings.GpuGraph}" />
-                <TextBlock Text="{Binding GpuText}" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" IsVisible="{Binding Settings.ShowRam}">
-                <c:Sparkline Values="{Binding RamHistory}" Maximum="100" Stroke="{Binding TextBrush}"
-                             Height="{Binding Settings.FontSize}" IsVisible="{Binding Settings.RamGraph}" />
-                <TextBlock Text="{Binding RamText}" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" IsVisible="{Binding Settings.ShowDisk}">
-                <c:Sparkline Values="{Binding DiskHistory}" Maximum="100" Stroke="{Binding TextBrush}"
-                             Height="{Binding Settings.FontSize}" IsVisible="{Binding Settings.DiskGraph}" />
-                <TextBlock Text="{Binding DiskText}" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" IsVisible="{Binding Settings.ShowNetwork}">
-                <c:Sparkline Values="{Binding NetworkHistory}" Stroke="{Binding TextBrush}"
-                             Height="{Binding Settings.FontSize}" IsVisible="{Binding Settings.NetworkGraph}" />
-                <TextBlock Text="{Binding NetworkText}" />
-            </StackPanel>
-        </StackPanel>
+        <Panel>
+            <!-- stats flow left to right and wrap when the overlay is too narrow, or stack when fitting to content -->
+            <WrapPanel Orientation="{Binding StatsOrientation}" ItemSpacing="{Binding StatsSpacing}" LineSpacing="2">
+                <StackPanel Orientation="Horizontal" IsVisible="{Binding Settings.ShowFps}">
+                    <c:Sparkline Values="{Binding FpsHistory}" Stroke="{Binding TextBrush}"
+                                 Height="{Binding Settings.FontSize}" IsVisible="{Binding Settings.FpsGraph}" />
+                    <TextBlock Text="{Binding FpsText}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" IsVisible="{Binding Settings.ShowCpu}">
+                    <c:Sparkline Values="{Binding CpuHistory}" Maximum="100" Stroke="{Binding TextBrush}"
+                                 Height="{Binding Settings.FontSize}" IsVisible="{Binding Settings.CpuGraph}" />
+                    <TextBlock Text="{Binding CpuText}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" IsVisible="{Binding Settings.ShowGpu}">
+                    <c:Sparkline Values="{Binding GpuHistory}" Maximum="100" Stroke="{Binding TextBrush}"
+                                 Height="{Binding Settings.FontSize}" IsVisible="{Binding Settings.GpuGraph}" />
+                    <TextBlock Text="{Binding GpuText}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" IsVisible="{Binding Settings.ShowRam}">
+                    <c:Sparkline Values="{Binding RamHistory}" Maximum="100" Stroke="{Binding TextBrush}"
+                                 Height="{Binding Settings.FontSize}" IsVisible="{Binding Settings.RamGraph}" />
+                    <TextBlock Text="{Binding RamText}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" IsVisible="{Binding Settings.ShowDisk}">
+                    <c:Sparkline Values="{Binding DiskHistory}" Maximum="100" Stroke="{Binding TextBrush}"
+                                 Height="{Binding Settings.FontSize}" IsVisible="{Binding Settings.DiskGraph}" />
+                    <TextBlock Text="{Binding DiskText}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" IsVisible="{Binding Settings.ShowNetwork}">
+                    <c:Sparkline Values="{Binding NetworkHistory}" Stroke="{Binding TextBrush}"
+                                 Height="{Binding Settings.FontSize}" IsVisible="{Binding Settings.NetworkGraph}" />
+                    <TextBlock Text="{Binding NetworkText}" />
+                </StackPanel>
+            </WrapPanel>
+            <Border x:Name="ResizeGrip" IsVisible="{Binding IsEditing}" />
+        </Panel>
     </Border>
 
 </Window>

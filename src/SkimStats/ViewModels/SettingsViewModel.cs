@@ -130,6 +130,10 @@ public partial class SettingsViewModel : ViewModelBase
         }
     }
 
+    // back to the auto-sized list
+    [RelayCommand]
+    private void FitOverlayToContent() => Settings.OverlayWidth = 0;
+
     [RelayCommand]
     private void StartRecordingHotkey()
     {
