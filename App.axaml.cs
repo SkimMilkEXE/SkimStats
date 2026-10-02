@@ -1,9 +1,12 @@
 using System;
+using System.ComponentModel;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
+using SkimStats.Models;
 using SkimStats.Services;
 using SkimStats.ViewModels;
 using SkimStats.Views;
@@ -12,12 +15,14 @@ namespace SkimStats;
 
 public partial class App : Application
 {
-    private const uint VK_O = 0x4F;
-
+    private AppSettings _settings = new();
     private StatsSampler? _sampler;
     private HotkeyService? _hotkey;
     private MainWindow? _mainWindow;
     private OverlayWindow? _overlay;
+    private OverlayViewModel? _overlayViewModel;
+    private Window? _settingsWindow;
+    private NativeMenuItem? _toggleMenuItem;
     private bool _quitting;
 
     public override void Initialize()
@@ -29,6 +34,8 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            _settings = SettingsService.Load();
+
             MainViewModel mainViewModel;
             try
             {
@@ -46,7 +53,10 @@ public partial class App : Application
             }
 
             _mainWindow = new MainWindow { DataContext = mainViewModel };
-            desktop.MainWindow = _mainWindow;
+
+            // the lifetime shows MainWindow on startup, so leave it unset to start in the tray
+            if (!_settings.StartMinimized)
+                desktop.MainWindow = _mainWindow;
 
             // closing the window hides it to the tray, only quit from the tray really exits
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -60,22 +70,26 @@ public partial class App : Application
 
             if (_sampler is not null)
             {
-                _overlay = new OverlayWindow { DataContext = new OverlayViewModel(_sampler) };
+                _overlayViewModel = new OverlayViewModel(_sampler, _settings);
+                _overlay = new OverlayWindow { DataContext = _overlayViewModel };
                 _overlay.Show();
             }
 
-            // ctrl+shift+o for now, becomes a setting later
             if (OperatingSystem.IsWindows())
             {
-                _hotkey = new HotkeyService(_mainWindow, Win32Interop.MOD_CONTROL | Win32Interop.MOD_SHIFT, VK_O);
+                _hotkey = new HotkeyService(_mainWindow);
+                _hotkey.Register(_settings.Hotkey);
                 _hotkey.Pressed += ToggleOverlay;
             }
 
             CreateTrayIcon(desktop);
+            _settings.PropertyChanged += OnSettingChanged;
 
             desktop.Exit += (_, _) =>
             {
-                _hotkey?.Dispose();
+                SettingsService.Save(_settings);
+                if (OperatingSystem.IsWindows())
+                    _hotkey?.Dispose();
                 _sampler?.Dispose();
             };
         }
@@ -85,14 +99,14 @@ public partial class App : Application
 
     private void CreateTrayIcon(IClassicDesktopStyleApplicationLifetime desktop)
     {
-        // tells the user up front if another app already took the hotkey
-        var hotkeyLabel = _hotkey?.IsRegistered == true ? "Ctrl+Shift+O" : "hotkey unavailable";
-
         var show = new NativeMenuItem("Show SkimStats");
         show.Click += (_, _) => ShowMainWindow();
 
-        var toggle = new NativeMenuItem($"Toggle overlay ({hotkeyLabel})") { IsEnabled = _overlay is not null };
-        toggle.Click += (_, _) => ToggleOverlay();
+        _toggleMenuItem = new NativeMenuItem(ToggleMenuLabel()) { IsEnabled = _overlay is not null };
+        _toggleMenuItem.Click += (_, _) => ToggleOverlay();
+
+        var settings = new NativeMenuItem("Settings…") { IsEnabled = _overlay is not null && _hotkey is not null };
+        settings.Click += (_, _) => ShowSettings();
 
         var quit = new NativeMenuItem("Quit");
         quit.Click += (_, _) =>
@@ -105,11 +119,21 @@ public partial class App : Application
         {
             Icon = new WindowIcon(AssetLoader.Open(new Uri("avares://SkimStats/Assets/avalonia-logo.ico"))),
             ToolTipText = "SkimStats",
-            Menu = [show, toggle, new NativeMenuItemSeparator(), quit],
+            Menu = [show, _toggleMenuItem, settings, new NativeMenuItemSeparator(), quit],
         };
         tray.Clicked += (_, _) => ShowMainWindow();
 
         TrayIcon.SetIcons(this, [tray]);
+    }
+
+    // tells the user up front if another app already took the hotkey
+    private string ToggleMenuLabel() =>
+        $"Toggle overlay ({(OperatingSystem.IsWindows() ? _hotkey?.Current?.ToString() : null) ?? "hotkey unavailable"})";
+
+    private void OnSettingChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(AppSettings.Hotkey) && _toggleMenuItem is not null)
+            _toggleMenuItem.Header = ToggleMenuLabel();
     }
 
     private void ShowMainWindow()
@@ -120,6 +144,36 @@ public partial class App : Application
             _mainWindow.WindowState = WindowState.Normal;
         _mainWindow.Show();
         _mainWindow.Activate();
+    }
+
+    private void ShowSettings()
+    {
+        if (!OperatingSystem.IsWindows() || _overlay is null || _overlayViewModel is null || _hotkey is null)
+            return;
+
+        // only one settings window at a time
+        if (_settingsWindow is not null)
+        {
+            _settingsWindow.Activate();
+            return;
+        }
+
+        // e.g. "1: 2560 x 1440 (main)"
+        var monitors = _overlay.Screens.All
+            .Select((s, i) => $"{i + 1}: {s.Bounds.Width} x {s.Bounds.Height}{(s.IsPrimary ? " (main)" : "")}")
+            .ToList();
+
+        _settingsWindow = new SettingsWindow
+        {
+            DataContext = new SettingsViewModel(_settings, _overlayViewModel, _hotkey, monitors),
+        };
+        _settingsWindow.Closed += (_, _) =>
+        {
+            _overlayViewModel.IsEditing = false; // lock the overlay again
+            SettingsService.Save(_settings);
+            _settingsWindow = null;
+        };
+        _settingsWindow.Show();
     }
 
     private void ToggleOverlay()

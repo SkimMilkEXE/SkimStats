@@ -1,0 +1,45 @@
+using System.Runtime.Versioning;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using SkimStats.Models;
+using SkimStats.ViewModels;
+
+namespace SkimStats.Views;
+
+[SupportedOSPlatform("windows")]
+public partial class SettingsWindow : Window
+{
+    public SettingsWindow()
+    {
+        InitializeComponent();
+
+        // tunnel so we see keys before the focused button does
+        AddHandler(KeyDownEvent, OnKeyDownWhileRecording, RoutingStrategies.Tunnel);
+    }
+
+    protected override void OnClosed(System.EventArgs e)
+    {
+        base.OnClosed(e);
+        // closing mid-recording would otherwise leave no hotkey registered
+        if (DataContext is SettingsViewModel { IsRecordingHotkey: true } vm)
+            vm.FinishRecordingHotkey(null);
+    }
+
+    private void OnKeyDownWhileRecording(object? sender, KeyEventArgs e)
+    {
+        if (DataContext is not SettingsViewModel { IsRecordingHotkey: true } vm)
+            return;
+
+        e.Handled = true;
+        if (e.Key == Key.Escape)
+        {
+            vm.FinishRecordingHotkey(null);
+            return;
+        }
+
+        // modifier-only presses return null, keep waiting for the real key
+        if (Hotkey.FromKeyPress(e.KeyModifiers, e.Key) is { } hotkey)
+            vm.FinishRecordingHotkey(hotkey);
+    }
+}

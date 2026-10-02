@@ -1,3 +1,6 @@
+using System;
+using System.Linq;
+using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using SkimStats.Models;
 using SkimStats.Services;
@@ -6,23 +9,63 @@ namespace SkimStats.ViewModels;
 
 public partial class OverlayViewModel : ViewModelBase
 {
-    [ObservableProperty]
-    public partial string CpuText { get; set; } = "CPU --";
+    private readonly StatsSampler? _sampler;
 
-    [ObservableProperty]
-    public partial string RamText { get; set; } = "RAM --";
+    public AppSettings Settings { get; }
 
-    public OverlayViewModel(StatsSampler sampler)
+    [ObservableProperty] public partial string CpuText { get; set; } = "CPU --";
+    [ObservableProperty] public partial string RamText { get; set; } = "RAM --";
+    [ObservableProperty] public partial string DiskText { get; set; } = "DISK --";
+    [ObservableProperty] public partial string NetworkText { get; set; } = "NET --";
+
+    // sparkline data, only filled for stats that are shown with a graph
+    [ObservableProperty] public partial double[]? CpuHistory { get; set; }
+    [ObservableProperty] public partial double[]? RamHistory { get; set; }
+    [ObservableProperty] public partial double[]? DiskHistory { get; set; }
+    [ObservableProperty] public partial double[]? NetworkHistory { get; set; }
+
+    // true while the user is dragging the overlay into place
+    [ObservableProperty] public partial bool IsEditing { get; set; }
+
+    public IBrush TextBrush => new SolidColorBrush(Settings.TextColor);
+    public IBrush BackgroundBrush => new SolidColorBrush(Colors.Black, Settings.BackgroundOpacity);
+
+    public OverlayViewModel(StatsSampler sampler, AppSettings settings) : this(settings)
     {
+        _sampler = sampler;
         sampler.SnapshotTaken += OnSnapshot;
     }
 
     // previewer only
-    public OverlayViewModel() { }
+    public OverlayViewModel() : this(new AppSettings()) { }
+
+    private OverlayViewModel(AppSettings settings)
+    {
+        Settings = settings;
+        Settings.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(AppSettings.TextColor))
+                OnPropertyChanged(nameof(TextBrush));
+            else if (e.PropertyName == nameof(AppSettings.BackgroundOpacity))
+                OnPropertyChanged(nameof(BackgroundBrush));
+        };
+    }
 
     private void OnSnapshot(StatsSnapshot s)
     {
         CpuText = $"CPU {s.CpuPercent:0}%";
         RamText = $"RAM {Format.Bytes(s.RamUsedBytes)} / {Format.Bytes(s.RamTotalBytes)}";
+        DiskText = $"DISK {s.DiskActivePercent:0}%";
+        NetworkText = $"NET ↓{Format.Rate(s.NetDownBytesPerSec)} ↑{Format.Rate(s.NetUpBytesPerSec)}";
+
+        CpuHistory = HistoryIf(Settings.ShowCpu && Settings.CpuGraph, x => x.CpuPercent);
+        RamHistory = HistoryIf(Settings.ShowRam && Settings.RamGraph, x => x.RamPercent);
+        DiskHistory = HistoryIf(Settings.ShowDisk && Settings.DiskGraph, x => x.DiskActivePercent);
+        // ponytail: download only, add an upload line if people ask for it
+        NetworkHistory = HistoryIf(Settings.ShowNetwork && Settings.NetworkGraph, x => x.NetDownBytesPerSec);
     }
+
+    // skips the copy entirely when the graph is hidden
+    private double[]? HistoryIf(bool wanted, Func<StatsSnapshot, double> pick) =>
+        wanted && _sampler is not null ? _sampler.History.Select(pick).ToArray() : null;
 }

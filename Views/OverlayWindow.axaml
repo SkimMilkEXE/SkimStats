@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:SkimStats.ViewModels"
+        xmlns:c="using:SkimStats.Controls"
         x:Class="SkimStats.Views.OverlayWindow"
         x:DataType="vm:OverlayViewModel"
         Title="SkimStats Overlay"
@@ -11,17 +12,53 @@
         CanResize="False"
         SizeToContent="WidthAndHeight"
         Background="Transparent"
-        TransparencyLevelHint="Transparent">
+        TransparencyLevelHint="Transparent"
+        FontSize="{Binding Settings.FontSize}"
+        Foreground="{Binding TextBrush}">
 
     <Design.DataContext>
         <vm:OverlayViewModel />
     </Design.DataContext>
 
-    <!-- small dark box so the text stays readable over bright games -->
-    <Border Background="#99000000" CornerRadius="6" Padding="10,6">
-        <StackPanel>
-            <TextBlock Text="{Binding CpuText}" Foreground="White" FontSize="14" />
-            <TextBlock Text="{Binding RamText}" Foreground="White" FontSize="14" />
+    <Window.Styles>
+        <!-- graph sits left of its text, as tall as one line -->
+        <Style Selector="c|Sparkline">
+            <Setter Property="Width" Value="60" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+        </Style>
+        <!-- outline + move cursor so it's obvious the overlay can be dragged -->
+        <Style Selector="Border#Root.editing">
+            <Setter Property="BorderBrush" Value="DodgerBlue" />
+            <Setter Property="Cursor" Value="SizeAll" />
+        </Style>
+    </Window.Styles>
+
+    <!-- border is always 2px (transparent when locked) so the size doesn't jump in edit mode -->
+    <Border x:Name="Root" Classes.editing="{Binding IsEditing}"
+            Background="{Binding BackgroundBrush}"
+            BorderBrush="Transparent" BorderThickness="2"
+            CornerRadius="6" Padding="10,6">
+        <StackPanel Spacing="2">
+            <StackPanel Orientation="Horizontal" IsVisible="{Binding Settings.ShowCpu}">
+                <c:Sparkline Values="{Binding CpuHistory}" Maximum="100" Stroke="{Binding TextBrush}"
+                             Height="{Binding Settings.FontSize}" IsVisible="{Binding Settings.CpuGraph}" />
+                <TextBlock Text="{Binding CpuText}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" IsVisible="{Binding Settings.ShowRam}">
+                <c:Sparkline Values="{Binding RamHistory}" Maximum="100" Stroke="{Binding TextBrush}"
+                             Height="{Binding Settings.FontSize}" IsVisible="{Binding Settings.RamGraph}" />
+                <TextBlock Text="{Binding RamText}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" IsVisible="{Binding Settings.ShowDisk}">
+                <c:Sparkline Values="{Binding DiskHistory}" Maximum="100" Stroke="{Binding TextBrush}"
+                             Height="{Binding Settings.FontSize}" IsVisible="{Binding Settings.DiskGraph}" />
+                <TextBlock Text="{Binding DiskText}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" IsVisible="{Binding Settings.ShowNetwork}">
+                <c:Sparkline Values="{Binding NetworkHistory}" Stroke="{Binding TextBrush}"
+                             Height="{Binding Settings.FontSize}" IsVisible="{Binding Settings.NetworkGraph}" />
+                <TextBlock Text="{Binding NetworkText}" />
+            </StackPanel>
         </StackPanel>
     </Border>
 
