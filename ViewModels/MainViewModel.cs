@@ -1,7 +1,5 @@
-using System.Collections.ObjectModel;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
-using LiveChartsCore;
-using LiveChartsCore.SkiaSharpView;
 using SkimStats.Models;
 using SkimStats.Services;
 
@@ -9,82 +7,49 @@ namespace SkimStats.ViewModels;
 
 public partial class MainViewModel : ViewModelBase
 {
-    // graph history, the chart redraws when these change
-    private readonly ObservableCollection<double> _cpuValues = [];
-    private readonly ObservableCollection<double> _ramValues = [];
+    public GraphViewModel Cpu { get; } = new("CPU: --", Percent, 100, "CPU");
+    public GraphViewModel Ram { get; } = new("RAM: --", Percent, 100, "RAM");
+    public GraphViewModel Disk { get; } = new("Disk: --", Percent, 100, "Active");
+    public GraphViewModel Network { get; } = new("Network: --", Format.Rate, null, "Down", "Up");
 
+    // free space per drive, changes slowly so it's text not a graph
     [ObservableProperty]
-    public partial string CpuText { get; set; } = "CPU: --";
+    public partial string DrivesText { get; set; } = "";
 
+    // set when stats couldn't start, shows the reason instead of graphs
     [ObservableProperty]
-    public partial string RamText { get; set; } = "RAM: --";
+    public partial string? Error { get; set; }
 
-    public ISeries[] CpuSeries { get; }
-    public ISeries[] RamSeries { get; }
-
-    // each chart needs its own axis objects, they can't be shared
-    public Axis[] CpuXAxes { get; } = [TimeAxis()];
-    public Axis[] CpuYAxes { get; } = [PercentAxis()];
-    public Axis[] RamXAxes { get; } = [TimeAxis()];
-    public Axis[] RamYAxes { get; } = [PercentAxis()];
-
-    public MainViewModel(StatsSampler sampler) : this()
+    public MainViewModel(StatsSampler sampler)
     {
         sampler.SnapshotTaken += OnSnapshot;
     }
 
-    // used when stats couldn't start, shows the reason instead of numbers
-    public MainViewModel(string error) : this()
+    public MainViewModel(string error)
     {
-        CpuText = error;
-        RamText = "";
+        Error = error;
     }
 
     // previewer only
-    public MainViewModel()
-    {
-        CpuSeries = [LineOf(_cpuValues)];
-        RamSeries = [LineOf(_ramValues)];
-    }
+    public MainViewModel() { }
+
+    private static string Percent(double value) => $"{value:0}%";
 
     private void OnSnapshot(StatsSnapshot s)
     {
-        const double gb = 1024.0 * 1024 * 1024;
-        CpuText = $"CPU: {s.CpuPercent:0}%";
-        RamText = $"RAM: {s.RamUsedBytes / gb:0.0} / {s.RamTotalBytes / gb:0.0} GB ({s.RamPercent:0}%)";
+        Cpu.Text = $"CPU: {s.CpuPercent:0}%";
+        Cpu.Add(s.CpuPercent);
 
-        AddCapped(_cpuValues, s.CpuPercent);
-        AddCapped(_ramValues, s.RamPercent);
+        Ram.Text = $"RAM: {Format.Bytes(s.RamUsedBytes)} / {Format.Bytes(s.RamTotalBytes)} ({s.RamPercent:0}%)";
+        Ram.Add(s.RamPercent);
+
+        Disk.Text = $"Disk: {s.DiskActivePercent:0}%   Read {Format.Rate(s.DiskReadBytesPerSec)}   Write {Format.Rate(s.DiskWriteBytesPerSec)}";
+        Disk.Add(s.DiskActivePercent);
+
+        Network.Text = $"Network: Down {Format.Rate(s.NetDownBytesPerSec)}   Up {Format.Rate(s.NetUpBytesPerSec)}";
+        Network.Add(s.NetDownBytesPerSec, s.NetUpBytesPerSec);
+
+        DrivesText = string.Join("     ", s.Drives.Select(d =>
+            $"{d.Name.TrimEnd('\\')} {Format.Bytes(d.UsedBytes)} / {Format.Bytes(d.TotalBytes)} used"));
     }
-
-    // keeps the graph at a fixed width by dropping the oldest point
-    private static void AddCapped(ObservableCollection<double> values, double value)
-    {
-        values.Add(value);
-        if (values.Count > StatsSampler.HistoryLength)
-            values.RemoveAt(0);
-    }
-
-    // plain line, no dots or curve smoothing
-    private static LineSeries<double> LineOf(ObservableCollection<double> values) => new()
-    {
-        Values = values,
-        GeometrySize = 0,
-        LineSmoothness = 0,
-    };
-
-    // hidden x axis fixed to the full history width, so the line doesn't stretch while it fills up
-    private static Axis TimeAxis() => new()
-    {
-        IsVisible = false,
-        MinLimit = 0,
-        MaxLimit = StatsSampler.HistoryLength - 1,
-    };
-
-    private static Axis PercentAxis() => new()
-    {
-        MinLimit = 0,
-        MaxLimit = 100,
-        Labeler = v => $"{v:0}%",
-    };
 }
