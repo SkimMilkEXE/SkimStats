@@ -18,6 +18,7 @@ public partial class App : Application
     private AppSettings _settings = new();
     private StatsSampler? _sampler;
     private HotkeyService? _hotkey;
+    private FpsMonitor? _fps;
     private MainWindow? _mainWindow;
     private OverlayWindow? _overlay;
     private OverlayViewModel? _overlayViewModel;
@@ -43,7 +44,8 @@ public partial class App : Application
                     throw new PlatformNotSupportedException("only windows is supported for now");
 
                 // one sampler shared by every view
-                _sampler = new StatsSampler(new WindowsStatsProvider(), TimeSpan.FromSeconds(1));
+                _fps = new FpsMonitor();
+                _sampler = new StatsSampler(new WindowsStatsProvider(_fps), TimeSpan.FromSeconds(1));
                 mainViewModel = new MainViewModel(_sampler, ShowSettings);
                 _sampler.Start();
             }
@@ -84,12 +86,17 @@ public partial class App : Application
 
             CreateTrayIcon(desktop);
             _settings.PropertyChanged += OnSettingChanged;
+            if (_settings.ShowFps && OperatingSystem.IsWindows())
+                _fps?.Start();
 
             desktop.Exit += (_, _) =>
             {
                 SettingsService.Save(_settings);
                 if (OperatingSystem.IsWindows())
+                {
                     _hotkey?.Dispose();
+                    _fps?.Dispose();
+                }
                 _sampler?.Dispose();
             };
         }
@@ -134,6 +141,15 @@ public partial class App : Application
     {
         if (e.PropertyName == nameof(AppSettings.Hotkey) && _toggleMenuItem is not null)
             _toggleMenuItem.Header = ToggleMenuLabel();
+
+        // presentmon only runs while fps is shown
+        if (e.PropertyName == nameof(AppSettings.ShowFps) && OperatingSystem.IsWindows())
+        {
+            if (_settings.ShowFps)
+                _fps?.Start();
+            else
+                _fps?.Stop();
+        }
     }
 
     private void ShowMainWindow()
@@ -148,7 +164,7 @@ public partial class App : Application
 
     private void ShowSettings()
     {
-        if (!OperatingSystem.IsWindows() || _overlay is null || _overlayViewModel is null || _hotkey is null)
+        if (!OperatingSystem.IsWindows() || _overlay is null || _overlayViewModel is null || _hotkey is null || _fps is null)
             return;
 
         // only one settings window at a time
@@ -165,10 +181,12 @@ public partial class App : Application
 
         _settingsWindow = new SettingsWindow
         {
-            DataContext = new SettingsViewModel(_settings, _overlayViewModel, _hotkey, monitors),
+            DataContext = new SettingsViewModel(_settings, _overlayViewModel, _hotkey, _fps, monitors),
         };
         _settingsWindow.Closed += (_, _) =>
         {
+            if (OperatingSystem.IsWindows())
+                ((SettingsViewModel)_settingsWindow.DataContext!).Detach();
             _overlayViewModel.IsEditing = false; // lock the overlay again
             SettingsService.Save(_settings);
             _settingsWindow = null;

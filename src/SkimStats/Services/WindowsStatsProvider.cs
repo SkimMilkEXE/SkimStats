@@ -20,9 +20,12 @@ public sealed class WindowsStatsProvider : IStatsProvider
     private readonly PerformanceCounter _diskWriteCounter = new("PhysicalDisk", "Disk Write Bytes/sec", "_Total");
 
     private readonly NetworkRateTracker _network = new();
+    private readonly FpsMonitor _fps;
 
-    public WindowsStatsProvider()
+    public WindowsStatsProvider(FpsMonitor fps)
     {
+        _fps = fps;
+
         // first read of rate counters always returns 0, throw it away
         _cpuCounter.NextValue();
         _diskIdleCounter.NextValue();
@@ -60,7 +63,8 @@ public sealed class WindowsStatsProvider : IStatsProvider
             _diskWriteCounter.NextValue(),
             drives,
             down,
-            up);
+            up,
+            _fps.Status == FpsStatus.Running ? _fps.ForegroundFps() : null);
     }
 
     public void Dispose()

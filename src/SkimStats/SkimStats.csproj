@@ -16,6 +16,8 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
+    <!-- fps comes from intel presentmon, kept as a real file next to the exe since we run it as a process -->
+    <None Include="Tools\PresentMon.exe" CopyToOutputDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
   </ItemGroup>
 
   <ItemGroup>

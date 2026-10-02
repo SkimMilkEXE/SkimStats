@@ -50,6 +50,17 @@
                 <Border Classes="card">
                     <StackPanel>
                         <Grid ColumnDefinitions="*,Auto,Auto">
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="FPS" />
+                                <TextBlock Classes="hint" Text="{Binding FpsStatusText}" />
+                            </StackPanel>
+                            <CheckBox Grid.Column="1" Content="Graph" Margin="12,0,16,0" IsChecked="{Binding Settings.FpsGraph}" IsEnabled="{Binding Settings.ShowFps}" />
+                            <ToggleSwitch Grid.Column="2" IsChecked="{Binding Settings.ShowFps}" />
+                        </Grid>
+                        <Button Content="Allow FPS tracking" Margin="0,8,0,0" HorizontalAlignment="Left"
+                                Command="{Binding GrantFpsPermissionCommand}" IsVisible="{Binding CanGrantFpsPermission}" />
+                        <Separator />
+                        <Grid ColumnDefinitions="*,Auto,Auto">
                             <TextBlock Classes="label" Text="CPU usage" />
                             <CheckBox Grid.Column="1" Content="Graph" Margin="0,0,16,0" IsChecked="{Binding Settings.CpuGraph}" IsEnabled="{Binding Settings.ShowCpu}" />
                             <ToggleSwitch Grid.Column="2" IsChecked="{Binding Settings.ShowCpu}" />

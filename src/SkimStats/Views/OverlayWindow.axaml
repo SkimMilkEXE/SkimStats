@@ -39,6 +39,11 @@
             BorderBrush="Transparent" BorderThickness="2"
             CornerRadius="6" Padding="10,6">
         <StackPanel Spacing="2">
+            <StackPanel Orientation="Horizontal" IsVisible="{Binding Settings.ShowFps}">
+                <c:Sparkline Values="{Binding FpsHistory}" Stroke="{Binding TextBrush}"
+                             Height="{Binding Settings.FontSize}" IsVisible="{Binding Settings.FpsGraph}" />
+                <TextBlock Text="{Binding FpsText}" />
+            </StackPanel>
             <StackPanel Orientation="Horizontal" IsVisible="{Binding Settings.ShowCpu}">
                 <c:Sparkline Values="{Binding CpuHistory}" Maximum="100" Stroke="{Binding TextBrush}"
                              Height="{Binding Settings.FontSize}" IsVisible="{Binding Settings.CpuGraph}" />
