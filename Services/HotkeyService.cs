@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.Versioning;
 using Avalonia.Controls;
+using SkimStats.Models;
 
 namespace SkimStats.Services;
 
@@ -13,15 +14,32 @@ public sealed class HotkeyService : IDisposable
 
     public event Action? Pressed;
 
-    // false when another app already owns this key combo
-    public bool IsRegistered { get; }
+    // null when nothing is registered (another app owns the combo, or mid re-recording)
+    public Hotkey? Current { get; private set; }
 
     // window must stay alive (hidden is fine) since windows sends the key press to it
-    public HotkeyService(Window window, uint modifiers, uint virtualKey)
+    public HotkeyService(Window window)
     {
         _hwnd = window.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
         Win32Properties.AddWndProcHookCallback(window, OnMessage);
-        IsRegistered = Win32Interop.RegisterHotKey(_hwnd, HotkeyId, modifiers | Win32Interop.MOD_NOREPEAT, virtualKey);
+    }
+
+    // swaps to a new combo, false when another app already owns it
+    public bool Register(Hotkey hotkey)
+    {
+        Unregister();
+        if (!Win32Interop.RegisterHotKey(_hwnd, HotkeyId, hotkey.Modifiers | Win32Interop.MOD_NOREPEAT, hotkey.VirtualKey))
+            return false;
+        Current = hotkey;
+        return true;
+    }
+
+    public void Unregister()
+    {
+        if (Current is null)
+            return;
+        Win32Interop.UnregisterHotKey(_hwnd, HotkeyId);
+        Current = null;
     }
 
     private IntPtr OnMessage(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -34,5 +52,5 @@ public sealed class HotkeyService : IDisposable
         return IntPtr.Zero;
     }
 
-    public void Dispose() => Win32Interop.UnregisterHotKey(_hwnd, HotkeyId);
+    public void Dispose() => Unregister();
 }

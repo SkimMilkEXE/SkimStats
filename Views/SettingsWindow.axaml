@@ -1,0 +1,82 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SkimStats.ViewModels"
+        x:Class="SkimStats.Views.SettingsWindow"
+        x:DataType="vm:SettingsViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="SkimStats Settings"
+        Width="460"
+        SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Styles>
+        <Style Selector="TextBlock.header">
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,12,0,4" />
+        </Style>
+        <Style Selector="TextBlock.error">
+            <Setter Property="Foreground" Value="IndianRed" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+    </Window.Styles>
+
+    <StackPanel Margin="20,8,20,20" Spacing="6">
+
+        <!-- which stats, and whether each one gets a mini graph -->
+        <TextBlock Classes="header" Text="Overlay stats" />
+        <Grid ColumnDefinitions="120,Auto" RowDefinitions="Auto,Auto,Auto,Auto">
+            <CheckBox Grid.Row="0" Content="CPU" IsChecked="{Binding Settings.ShowCpu}" />
+            <CheckBox Grid.Row="0" Grid.Column="1" Content="Show graph" IsChecked="{Binding Settings.CpuGraph}" IsEnabled="{Binding Settings.ShowCpu}" />
+            <CheckBox Grid.Row="1" Content="RAM" IsChecked="{Binding Settings.ShowRam}" />
+            <CheckBox Grid.Row="1" Grid.Column="1" Content="Show graph" IsChecked="{Binding Settings.RamGraph}" IsEnabled="{Binding Settings.ShowRam}" />
+            <CheckBox Grid.Row="2" Content="Disk" IsChecked="{Binding Settings.ShowDisk}" />
+            <CheckBox Grid.Row="2" Grid.Column="1" Content="Show graph" IsChecked="{Binding Settings.DiskGraph}" IsEnabled="{Binding Settings.ShowDisk}" />
+            <CheckBox Grid.Row="3" Content="Network" IsChecked="{Binding Settings.ShowNetwork}" />
+            <CheckBox Grid.Row="3" Grid.Column="1" Content="Show graph" IsChecked="{Binding Settings.NetworkGraph}" IsEnabled="{Binding Settings.ShowNetwork}" />
+        </Grid>
+
+        <TextBlock Classes="header" Text="Position" />
+        <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto" RowSpacing="6">
+            <TextBlock Grid.Row="0" Text="Monitor" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch"
+                      ItemsSource="{Binding Monitors}" SelectedIndex="{Binding Settings.MonitorIndex}" />
+            <TextBlock Grid.Row="1" Text="Corner" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch"
+                      ItemsSource="{Binding Corners}" SelectedItem="{Binding Settings.Corner}" />
+        </Grid>
+        <ToggleButton Content="Move overlay by dragging" IsChecked="{Binding Overlay.IsEditing}" />
+        <TextBlock Text="Drag the overlay where you want it, then click the button again to lock it."
+                   TextWrapping="Wrap" Opacity="0.7" IsVisible="{Binding Overlay.IsEditing}" />
+
+        <TextBlock Classes="header" Text="Look" />
+        <Grid ColumnDefinitions="120,*,50" RowDefinitions="Auto,Auto,Auto" RowSpacing="6">
+            <TextBlock Grid.Row="0" Text="Font size" VerticalAlignment="Center" />
+            <Slider Grid.Row="0" Grid.Column="1" Minimum="8" Maximum="36"
+                    TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Settings.FontSize}" />
+            <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Settings.FontSize}" VerticalAlignment="Center" Margin="8,0,0,0" />
+
+            <TextBlock Grid.Row="1" Text="Background" VerticalAlignment="Center" />
+            <Slider Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding Settings.BackgroundOpacity}" />
+            <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Settings.BackgroundOpacity, StringFormat={}{0:P0}}" VerticalAlignment="Center" Margin="8,0,0,0" />
+
+            <TextBlock Grid.Row="2" Text="Text color" VerticalAlignment="Center" />
+            <ColorPicker Grid.Row="2" Grid.Column="1" HorizontalAlignment="Left"
+                         Color="{Binding Settings.TextColor, Mode=TwoWay}" IsAlphaEnabled="False" />
+        </Grid>
+
+        <TextBlock Classes="header" Text="Toggle overlay hotkey" />
+        <Button Content="{Binding HotkeyText}" Command="{Binding StartRecordingHotkeyCommand}"
+                IsEnabled="{Binding !IsRecordingHotkey}" HorizontalAlignment="Stretch" />
+        <TextBlock Classes="error" Text="{Binding HotkeyError}"
+                   IsVisible="{Binding HotkeyError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+        <TextBlock Classes="header" Text="Startup" />
+        <CheckBox Content="Start minimized to tray" IsChecked="{Binding Settings.StartMinimized}" />
+        <CheckBox Content="Launch when Windows starts" IsChecked="{Binding LaunchOnStartup}" />
+        <TextBlock Classes="error" Text="{Binding StartupError}"
+                   IsVisible="{Binding StartupError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+    </StackPanel>
+
+</Window>
