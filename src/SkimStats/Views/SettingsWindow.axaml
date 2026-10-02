@@ -1,0 +1,176 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SkimStats.ViewModels"
+        x:Class="SkimStats.Views.SettingsWindow"
+        x:DataType="vm:SettingsViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="SkimStats Settings"
+        Width="500"
+        SizeToContent="Height"
+        MaxHeight="1000"
+        CanResize="False"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Styles>
+        <Style Selector="TextBlock.section">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="4,0,0,6" />
+        </Style>
+        <Style Selector="TextBlock.label">
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBlock.error">
+            <Setter Property="Foreground" Value="IndianRed" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <!-- thin divider between rows inside a card -->
+        <Style Selector="Separator">
+            <Setter Property="Margin" Value="0,8" />
+        </Style>
+        <!-- switches without the "On"/"Off" text, the row label says what it is -->
+        <Style Selector="ToggleSwitch">
+            <Setter Property="OnContent" Value="" />
+            <Setter Property="OffContent" Value="" />
+            <Setter Property="MinWidth" Value="0" />
+        </Style>
+    </Window.Styles>
+
+    <ScrollViewer>
+        <StackPanel Margin="20" Spacing="18">
+
+            <StackPanel Spacing="2">
+                <TextBlock Text="Overlay settings" FontSize="22" FontWeight="SemiBold" />
+                <TextBlock Classes="hint" Text="Changes show on the overlay right away and save when you close this window." />
+            </StackPanel>
+
+            <!-- which stats, and whether each one gets a mini graph -->
+            <StackPanel>
+                <TextBlock Classes="section" Text="Stats" />
+                <Border Classes="card">
+                    <StackPanel>
+                        <Grid ColumnDefinitions="*,Auto,Auto">
+                            <TextBlock Classes="label" Text="CPU usage" />
+                            <CheckBox Grid.Column="1" Content="Graph" Margin="0,0,16,0" IsChecked="{Binding Settings.CpuGraph}" IsEnabled="{Binding Settings.ShowCpu}" />
+                            <ToggleSwitch Grid.Column="2" IsChecked="{Binding Settings.ShowCpu}" />
+                        </Grid>
+                        <Separator />
+                        <Grid ColumnDefinitions="*,Auto,Auto">
+                            <TextBlock Classes="label" Text="RAM usage" />
+                            <CheckBox Grid.Column="1" Content="Graph" Margin="0,0,16,0" IsChecked="{Binding Settings.RamGraph}" IsEnabled="{Binding Settings.ShowRam}" />
+                            <ToggleSwitch Grid.Column="2" IsChecked="{Binding Settings.ShowRam}" />
+                        </Grid>
+                        <Separator />
+                        <Grid ColumnDefinitions="*,Auto,Auto">
+                            <TextBlock Classes="label" Text="Disk activity" />
+                            <CheckBox Grid.Column="1" Content="Graph" Margin="0,0,16,0" IsChecked="{Binding Settings.DiskGraph}" IsEnabled="{Binding Settings.ShowDisk}" />
+                            <ToggleSwitch Grid.Column="2" IsChecked="{Binding Settings.ShowDisk}" />
+                        </Grid>
+                        <Separator />
+                        <Grid ColumnDefinitions="*,Auto,Auto">
+                            <TextBlock Classes="label" Text="Network up / down" />
+                            <CheckBox Grid.Column="1" Content="Graph" Margin="0,0,16,0" IsChecked="{Binding Settings.NetworkGraph}" IsEnabled="{Binding Settings.ShowNetwork}" />
+                            <ToggleSwitch Grid.Column="2" IsChecked="{Binding Settings.ShowNetwork}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <StackPanel>
+                <TextBlock Classes="section" Text="Position" />
+                <Border Classes="card">
+                    <StackPanel>
+                        <Grid ColumnDefinitions="*,220">
+                            <TextBlock Classes="label" Text="Monitor" />
+                            <ComboBox Grid.Column="1" HorizontalAlignment="Stretch"
+                                      ItemsSource="{Binding Monitors}" SelectedIndex="{Binding Settings.MonitorIndex}" />
+                        </Grid>
+                        <Separator />
+                        <Grid ColumnDefinitions="*,220">
+                            <TextBlock Classes="label" Text="Corner" />
+                            <ComboBox Grid.Column="1" HorizontalAlignment="Stretch"
+                                      ItemsSource="{Binding Corners}" SelectedItem="{Binding SelectedCorner}" />
+                        </Grid>
+                        <Separator />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Drag to place" />
+                                <TextBlock Classes="hint" Text="Unlock, drag it into place, click again." />
+                            </StackPanel>
+                            <ToggleButton Grid.Column="1" Content="Move overlay" IsChecked="{Binding Overlay.IsEditing}" Margin="12,0,0,0" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <StackPanel>
+                <TextBlock Classes="section" Text="Appearance" />
+                <Border Classes="card">
+                    <StackPanel>
+                        <Grid ColumnDefinitions="*,180,48">
+                            <TextBlock Classes="label" Text="Font size" />
+                            <Slider Grid.Column="1" Minimum="8" Maximum="36" TickFrequency="1" IsSnapToTickEnabled="True"
+                                    Value="{Binding Settings.FontSize}" />
+                            <TextBlock Grid.Column="2" Classes="label" HorizontalAlignment="Right" Text="{Binding Settings.FontSize}" />
+                        </Grid>
+                        <Separator />
+                        <Grid ColumnDefinitions="*,180,48">
+                            <TextBlock Classes="label" Text="Background opacity" />
+                            <Slider Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding Settings.BackgroundOpacity}" />
+                            <TextBlock Grid.Column="2" Classes="label" HorizontalAlignment="Right"
+                                       Text="{Binding Settings.BackgroundOpacity, StringFormat={}{0:P0}}" />
+                        </Grid>
+                        <Separator />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Classes="label" Text="Text color" />
+                            <ColorPicker Grid.Column="1" Color="{Binding Settings.TextColor, Mode=TwoWay}" IsAlphaEnabled="False" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <StackPanel>
+                <TextBlock Classes="section" Text="Hotkey" />
+                <Border Classes="card">
+                    <StackPanel Spacing="6">
+                        <Grid ColumnDefinitions="*,220">
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Show / hide overlay" />
+                                <TextBlock Classes="hint" Text="Works in games. Click to change." />
+                            </StackPanel>
+                            <Button Grid.Column="1" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                    Content="{Binding HotkeyText}" Command="{Binding StartRecordingHotkeyCommand}"
+                                    IsEnabled="{Binding !IsRecordingHotkey}" />
+                        </Grid>
+                        <TextBlock Classes="error" Text="{Binding HotkeyError}"
+                                   IsVisible="{Binding HotkeyError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <StackPanel>
+                <TextBlock Classes="section" Text="Startup" />
+                <Border Classes="card">
+                    <StackPanel>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Classes="label" Text="Launch when Windows starts" />
+                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding LaunchOnStartup}" />
+                        </Grid>
+                        <Separator />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Start minimized to tray" />
+                                <TextBlock Classes="hint" Text="Only the overlay and tray icon appear on launch." />
+                            </StackPanel>
+                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding Settings.StartMinimized}" />
+                        </Grid>
+                        <TextBlock Classes="error" Text="{Binding StartupError}" Margin="0,6,0,0"
+                                   IsVisible="{Binding StartupError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+
+</Window>
