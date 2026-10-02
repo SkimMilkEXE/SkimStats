@@ -43,21 +43,71 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] public partial string? HotkeyError { get; set; }
     [ObservableProperty] public partial string? StartupError { get; set; }
 
-    public SettingsViewModel(AppSettings settings, OverlayViewModel overlay, HotkeyService hotkey, IReadOnlyList<string> monitors)
+    // fps status line under the fps toggle, and whether to offer the permission button
+    [ObservableProperty] public partial string FpsStatusText { get; set; } = "";
+    [ObservableProperty] public partial bool CanGrantFpsPermission { get; set; }
+    private string? _fpsGrantMessage;
+
+    private readonly FpsMonitor _fps;
+
+    public SettingsViewModel(AppSettings settings, OverlayViewModel overlay, HotkeyService hotkey, FpsMonitor fps, IReadOnlyList<string> monitors)
     {
         Settings = settings;
         Overlay = overlay;
         Monitors = monitors;
         _hotkey = hotkey;
+        _fps = fps;
         HotkeyText = HotkeyLabel();
+        UpdateFpsStatus();
 
+        Settings.PropertyChanged += OnSettingChanged;
+        _fps.StatusChanged += OnFpsStatusChanged;
+    }
+
+    // called when the window closes so the long-lived settings and fps monitor don't keep this alive
+    public void Detach()
+    {
+        Settings.PropertyChanged -= OnSettingChanged;
+        _fps.StatusChanged -= OnFpsStatusChanged;
+    }
+
+    private void OnSettingChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
         // dragging the overlay switches the corner to custom, keep the dropdown in sync
-        // ponytail: never unsubscribed, leaks one small view model per settings window opened, fine at human click rates
-        Settings.PropertyChanged += (_, e) =>
+        if (e.PropertyName == nameof(AppSettings.Corner))
+            OnPropertyChanged(nameof(SelectedCorner));
+    }
+
+    // status changes come from presentmon's thread
+    private void OnFpsStatusChanged() => Avalonia.Threading.Dispatcher.UIThread.Post(UpdateFpsStatus);
+
+    private void UpdateFpsStatus()
+    {
+        CanGrantFpsPermission = _fps.Status == FpsStatus.NeedsPermission && _fpsGrantMessage is null;
+        FpsStatusText = _fpsGrantMessage ?? _fps.Status switch
         {
-            if (e.PropertyName == nameof(AppSettings.Corner))
-                OnPropertyChanged(nameof(SelectedCorner));
+            FpsStatus.Running => "Measuring the window in front, using Intel PresentMon.",
+            FpsStatus.NeedsPermission => "Windows has to allow SkimStats to read frame timings. One-time setup, needs an admin prompt.",
+            FpsStatus.Missing => "PresentMon.exe is missing from the Tools folder, reinstall SkimStats.",
+            FpsStatus.Failed => "FPS tracking stopped unexpectedly. Turn it off and on again to retry.",
+            _ => "Shows FPS for the window in front, using Intel PresentMon.",
         };
+    }
+
+    [RelayCommand]
+    private async System.Threading.Tasks.Task GrantFpsPermission()
+    {
+        var error = await FpsMonitor.GrantPermissionAsync();
+        // windows only picks up the new group on the next sign in
+        _fpsGrantMessage = error ?? "Done! Sign out of Windows and back in, then FPS will work.";
+        UpdateFpsStatus();
+        if (error is not null)
+        {
+            // let them try again after an error or a cancelled prompt
+            _fpsGrantMessage = null;
+            FpsStatusText = error;
+            CanGrantFpsPermission = true;
+        }
     }
 
     // reads and writes the registry directly so it can't get out of sync

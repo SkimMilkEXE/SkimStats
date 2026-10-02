@@ -17,6 +17,8 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] public partial bool DiskGraph { get; set; }
     [ObservableProperty] public partial bool ShowNetwork { get; set; }
     [ObservableProperty] public partial bool NetworkGraph { get; set; }
+    [ObservableProperty] public partial bool ShowFps { get; set; } // off by default, runs presentmon
+    [ObservableProperty] public partial bool FpsGraph { get; set; }
 
     // position, monitor is ignored for custom since the drag already picked the spot
     [ObservableProperty] public partial OverlayCorner Corner { get; set; } = OverlayCorner.TopLeft;
