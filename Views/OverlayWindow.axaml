@@ -1,0 +1,28 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SkimStats.ViewModels"
+        x:Class="SkimStats.Views.OverlayWindow"
+        x:DataType="vm:OverlayViewModel"
+        Title="SkimStats Overlay"
+        WindowDecorations="None"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        CanResize="False"
+        SizeToContent="WidthAndHeight"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent">
+
+    <Design.DataContext>
+        <vm:OverlayViewModel />
+    </Design.DataContext>
+
+    <!-- small dark box so the text stays readable over bright games -->
+    <Border Background="#99000000" CornerRadius="6" Padding="10,6">
+        <StackPanel>
+            <TextBlock Text="{Binding CpuText}" Foreground="White" FontSize="14" />
+            <TextBlock Text="{Binding RamText}" Foreground="White" FontSize="14" />
+        </StackPanel>
+    </Border>
+
+</Window>
