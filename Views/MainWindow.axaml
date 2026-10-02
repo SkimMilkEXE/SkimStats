@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:SkimStats.ViewModels"
+        xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
@@ -15,10 +16,19 @@
         <vm:MainViewModel />
     </Design.DataContext>
 
-    <!-- placeholder until the graphs in milestone 3 -->
-    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-        <TextBlock Text="{Binding CpuText}" FontSize="24" />
-        <TextBlock Text="{Binding RamText}" FontSize="24" />
-    </StackPanel>
+    <!-- cpu on top, ram below, each with its current value above the graph -->
+    <Grid RowDefinitions="Auto,*,Auto,*" Margin="16">
+        <TextBlock Grid.Row="0" Text="{Binding CpuText}" FontSize="20" />
+        <lvc:CartesianChart Grid.Row="1" Series="{Binding CpuSeries}"
+                            XAxes="{Binding CpuXAxes}" YAxes="{Binding CpuYAxes}"
+                            TooltipPosition="Hidden"
+                            AnimationsSpeed="0:0:0" EasingFunction="{x:Null}" />
+
+        <TextBlock Grid.Row="2" Text="{Binding RamText}" FontSize="20" Margin="0,16,0,0" />
+        <lvc:CartesianChart Grid.Row="3" Series="{Binding RamSeries}"
+                            XAxes="{Binding RamXAxes}" YAxes="{Binding RamYAxes}"
+                            TooltipPosition="Hidden"
+                            AnimationsSpeed="0:0:0" EasingFunction="{x:Null}" />
+    </Grid>
 
 </Window>
