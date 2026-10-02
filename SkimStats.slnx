@@ -1,3 +1,8 @@
 <Solution>
-  <Project Path="SkimStats.csproj" />
+  <Folder Name="/src/">
+    <Project Path="src/SkimStats/SkimStats.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SkimStats.Tests/SkimStats.Tests.csproj" />
+  </Folder>
 </Solution>

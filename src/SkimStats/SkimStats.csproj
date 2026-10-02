@@ -4,10 +4,17 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+
+    <!-- shows up in the exe's file properties -->
+    <Version>1.0.0</Version>
+    <Product>SkimStats</Product>
+    <Company>SkimMilk.EXE</Company>
+    <Authors>Richard Hurley</Authors>
+    <Description>Lightweight system monitor with a click-through game overlay.</Description>
+    <Copyright>Copyright © 2026 Richard Hurley</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Models\" />
     <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
 

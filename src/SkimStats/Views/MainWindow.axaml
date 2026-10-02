@@ -19,14 +19,16 @@
     <!-- how every graph looks: title text above a chart -->
     <Window.DataTemplates>
         <DataTemplate DataType="vm:GraphViewModel">
-            <DockPanel Margin="8">
-                <TextBlock DockPanel.Dock="Top" Text="{Binding Text}" FontSize="18" />
-                <lvc:CartesianChart Series="{Binding Series}"
-                                    XAxes="{Binding XAxes}" YAxes="{Binding YAxes}"
-                                    LegendPosition="{Binding LegendPosition}"
-                                    TooltipPosition="Hidden"
-                                    AnimationsSpeed="0:0:0" EasingFunction="{x:Null}" />
-            </DockPanel>
+            <Border Classes="card" Margin="6">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding Text}" FontSize="18" />
+                    <lvc:CartesianChart Series="{Binding Series}"
+                                        XAxes="{Binding XAxes}" YAxes="{Binding YAxes}"
+                                        LegendPosition="{Binding LegendPosition}"
+                                        TooltipPosition="Hidden"
+                                        AnimationsSpeed="0:0:0" EasingFunction="{x:Null}" />
+                </DockPanel>
+            </Border>
         </DataTemplate>
     </Window.DataTemplates>
 
@@ -37,8 +39,10 @@
             <ContentControl Grid.Row="0" Grid.Column="1" Content="{Binding Ram}" />
             <ContentControl Grid.Row="1" Grid.Column="0" Content="{Binding Disk}" />
             <ContentControl Grid.Row="1" Grid.Column="1" Content="{Binding Network}" />
-            <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Margin="8" FontSize="16"
-                       Text="{Binding DrivesText}" TextWrapping="Wrap" />
+            <DockPanel Grid.Row="2" Grid.ColumnSpan="2" Margin="8">
+                <Button DockPanel.Dock="Right" Content="Overlay settings" Command="{Binding OpenSettingsCommand}" />
+                <TextBlock FontSize="16" Text="{Binding DrivesText}" TextWrapping="Wrap" VerticalAlignment="Center" />
+            </DockPanel>
         </Grid>
 
         <!-- only shows when stats failed to start -->

@@ -44,7 +44,7 @@ public partial class App : Application
 
                 // one sampler shared by every view
                 _sampler = new StatsSampler(new WindowsStatsProvider(), TimeSpan.FromSeconds(1));
-                mainViewModel = new MainViewModel(_sampler);
+                mainViewModel = new MainViewModel(_sampler, ShowSettings);
                 _sampler.Start();
             }
             catch (Exception ex)

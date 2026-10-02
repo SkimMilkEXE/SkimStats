@@ -17,7 +17,26 @@ public partial class SettingsViewModel : ViewModelBase
     public AppSettings Settings { get; }
     public OverlayViewModel Overlay { get; }
     public IReadOnlyList<string> Monitors { get; }
-    public OverlayCorner[] Corners { get; } = Enum.GetValues<OverlayCorner>();
+    // friendly names for the dropdown, ToString is what the combo box shows
+    public record CornerOption(OverlayCorner Value, string Name)
+    {
+        public override string ToString() => Name;
+    }
+
+    public CornerOption[] Corners { get; } =
+    [
+        new(OverlayCorner.TopLeft, "Top left"),
+        new(OverlayCorner.TopRight, "Top right"),
+        new(OverlayCorner.BottomLeft, "Bottom left"),
+        new(OverlayCorner.BottomRight, "Bottom right"),
+        new(OverlayCorner.Custom, "Custom (dragged)"),
+    ];
+
+    public CornerOption SelectedCorner
+    {
+        get => Array.Find(Corners, c => c.Value == Settings.Corner) ?? Corners[0];
+        set => Settings.Corner = value.Value;
+    }
 
     [ObservableProperty] public partial bool IsRecordingHotkey { get; set; }
     [ObservableProperty] public partial string HotkeyText { get; set; }
@@ -31,6 +50,14 @@ public partial class SettingsViewModel : ViewModelBase
         Monitors = monitors;
         _hotkey = hotkey;
         HotkeyText = HotkeyLabel();
+
+        // dragging the overlay switches the corner to custom, keep the dropdown in sync
+        // ponytail: never unsubscribed, leaks one small view model per settings window opened, fine at human click rates
+        Settings.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(AppSettings.Corner))
+                OnPropertyChanged(nameof(SelectedCorner));
+        };
     }
 
     // reads and writes the registry directly so it can't get out of sync

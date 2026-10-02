@@ -1,5 +1,7 @@
+using System;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using SkimStats.Models;
 using SkimStats.Services;
 
@@ -20,10 +22,19 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     public partial string? Error { get; set; }
 
-    public MainViewModel(StatsSampler sampler)
+    private readonly Action? _openSettings;
+
+    // app owns the settings window, this view model just asks for it
+    public MainViewModel(StatsSampler sampler, Action openSettings)
     {
+        _openSettings = openSettings;
         sampler.SnapshotTaken += OnSnapshot;
     }
+
+    [RelayCommand(CanExecute = nameof(CanOpenSettings))]
+    private void OpenSettings() => _openSettings?.Invoke();
+
+    private bool CanOpenSettings() => _openSettings is not null;
 
     public MainViewModel(string error)
     {
