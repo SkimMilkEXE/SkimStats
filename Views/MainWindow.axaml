@@ -16,19 +16,35 @@
         <vm:MainViewModel />
     </Design.DataContext>
 
-    <!-- cpu on top, ram below, each with its current value above the graph -->
-    <Grid RowDefinitions="Auto,*,Auto,*" Margin="16">
-        <TextBlock Grid.Row="0" Text="{Binding CpuText}" FontSize="20" />
-        <lvc:CartesianChart Grid.Row="1" Series="{Binding CpuSeries}"
-                            XAxes="{Binding CpuXAxes}" YAxes="{Binding CpuYAxes}"
-                            TooltipPosition="Hidden"
-                            AnimationsSpeed="0:0:0" EasingFunction="{x:Null}" />
+    <!-- how every graph looks: title text above a chart -->
+    <Window.DataTemplates>
+        <DataTemplate DataType="vm:GraphViewModel">
+            <DockPanel Margin="8">
+                <TextBlock DockPanel.Dock="Top" Text="{Binding Text}" FontSize="18" />
+                <lvc:CartesianChart Series="{Binding Series}"
+                                    XAxes="{Binding XAxes}" YAxes="{Binding YAxes}"
+                                    LegendPosition="{Binding LegendPosition}"
+                                    TooltipPosition="Hidden"
+                                    AnimationsSpeed="0:0:0" EasingFunction="{x:Null}" />
+            </DockPanel>
+        </DataTemplate>
+    </Window.DataTemplates>
 
-        <TextBlock Grid.Row="2" Text="{Binding RamText}" FontSize="20" Margin="0,16,0,0" />
-        <lvc:CartesianChart Grid.Row="3" Series="{Binding RamSeries}"
-                            XAxes="{Binding RamXAxes}" YAxes="{Binding RamYAxes}"
-                            TooltipPosition="Hidden"
-                            AnimationsSpeed="0:0:0" EasingFunction="{x:Null}" />
-    </Grid>
+    <Panel Margin="8">
+        <!-- 2x2 graphs with drive space along the bottom -->
+        <Grid RowDefinitions="*,*,Auto" ColumnDefinitions="*,*">
+            <ContentControl Grid.Row="0" Grid.Column="0" Content="{Binding Cpu}" />
+            <ContentControl Grid.Row="0" Grid.Column="1" Content="{Binding Ram}" />
+            <ContentControl Grid.Row="1" Grid.Column="0" Content="{Binding Disk}" />
+            <ContentControl Grid.Row="1" Grid.Column="1" Content="{Binding Network}" />
+            <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Margin="8" FontSize="16"
+                       Text="{Binding DrivesText}" TextWrapping="Wrap" />
+        </Grid>
+
+        <!-- only shows when stats failed to start -->
+        <TextBlock Text="{Binding Error}" FontSize="20" TextWrapping="Wrap"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                   IsVisible="{Binding Error, Converter={x:Static ObjectConverters.IsNotNull}}" />
+    </Panel>
 
 </Window>

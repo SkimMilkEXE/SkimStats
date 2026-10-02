@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace SkimStats.Models;
 
@@ -7,7 +8,15 @@ public record StatsSnapshot(
     DateTime Timestamp,
     float CpuPercent,
     ulong RamUsedBytes,
-    ulong RamTotalBytes)
+    ulong RamTotalBytes,
+    float DiskActivePercent,
+    double DiskReadBytesPerSec,
+    double DiskWriteBytesPerSec,
+    IReadOnlyList<DriveSpace> Drives,
+    double NetDownBytesPerSec,
+    double NetUpBytesPerSec)
 {
     public double RamPercent => RamTotalBytes == 0 ? 0 : 100.0 * RamUsedBytes / RamTotalBytes;
 }
+
+public record DriveSpace(string Name, long UsedBytes, long TotalBytes);

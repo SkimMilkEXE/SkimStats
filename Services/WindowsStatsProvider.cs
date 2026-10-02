@@ -1,5 +1,7 @@
 using System;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using SkimStats.Models;
@@ -12,10 +14,20 @@ public sealed class WindowsStatsProvider : IStatsProvider
     // matches task manager better than "Processor / % Processor Time"
     private readonly PerformanceCounter _cpuCounter = new("Processor Information", "% Processor Utility", "_Total");
 
+    // all physical disks combined
+    private readonly PerformanceCounter _diskIdleCounter = new("PhysicalDisk", "% Idle Time", "_Total");
+    private readonly PerformanceCounter _diskReadCounter = new("PhysicalDisk", "Disk Read Bytes/sec", "_Total");
+    private readonly PerformanceCounter _diskWriteCounter = new("PhysicalDisk", "Disk Write Bytes/sec", "_Total");
+
+    private readonly NetworkRateTracker _network = new();
+
     public WindowsStatsProvider()
     {
-        // first read always returns 0, throw it away
+        // first read of rate counters always returns 0, throw it away
         _cpuCounter.NextValue();
+        _diskIdleCounter.NextValue();
+        _diskReadCounter.NextValue();
+        _diskWriteCounter.NextValue();
     }
 
     public StatsSnapshot Read()
@@ -27,10 +39,37 @@ public sealed class WindowsStatsProvider : IStatsProvider
         if (!GlobalMemoryStatusEx(ref mem))
             mem = default; // shows 0 instead of crashing
 
-        return new StatsSnapshot(DateTime.Now, cpu, mem.TotalPhys - mem.AvailPhys, mem.TotalPhys);
+        // "% Disk Time" goes way past 100 with queued requests, idle time is closer to task manager
+        var diskActive = Math.Clamp(100f - _diskIdleCounter.NextValue(), 0f, 100f);
+
+        // fixed drives only, network and removable drives can hang or vanish
+        var drives = DriveInfo.GetDrives()
+            .Where(d => d.DriveType == DriveType.Fixed && d.IsReady)
+            .Select(d => new DriveSpace(d.Name, d.TotalSize - d.TotalFreeSpace, d.TotalSize))
+            .ToList();
+
+        var (down, up) = _network.Read();
+
+        return new StatsSnapshot(
+            DateTime.Now,
+            cpu,
+            mem.TotalPhys - mem.AvailPhys,
+            mem.TotalPhys,
+            diskActive,
+            _diskReadCounter.NextValue(),
+            _diskWriteCounter.NextValue(),
+            drives,
+            down,
+            up);
     }
 
-    public void Dispose() => _cpuCounter.Dispose();
+    public void Dispose()
+    {
+        _cpuCounter.Dispose();
+        _diskIdleCounter.Dispose();
+        _diskReadCounter.Dispose();
+        _diskWriteCounter.Dispose();
+    }
 
     [StructLayout(LayoutKind.Sequential)]
     private struct MemoryStatusEx
