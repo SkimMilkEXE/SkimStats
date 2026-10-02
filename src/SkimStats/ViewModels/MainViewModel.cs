@@ -11,6 +11,7 @@ public partial class MainViewModel : ViewModelBase
 {
     public GraphViewModel Cpu { get; } = new("CPU: --", Percent, 100, "CPU");
     public GraphViewModel Ram { get; } = new("RAM: --", Percent, 100, "RAM");
+    public GraphViewModel Gpu { get; } = new("GPU: --", Percent, 100, "GPU");
     public GraphViewModel Disk { get; } = new("Disk: --", Percent, 100, "Active");
     public GraphViewModel Network { get; } = new("Network: --", Format.Rate, null, "Down", "Up");
 
@@ -53,6 +54,9 @@ public partial class MainViewModel : ViewModelBase
 
         Ram.Text = $"RAM: {Format.Bytes(s.RamUsedBytes)} / {Format.Bytes(s.RamTotalBytes)} ({s.RamPercent:0}%)";
         Ram.Add(s.RamPercent);
+
+        Gpu.Text = s.GpuPercent is { } gpu ? $"GPU: {gpu:0}%" : "GPU: --";
+        Gpu.Add(s.GpuPercent ?? 0);
 
         Disk.Text = $"Disk: {s.DiskActivePercent:0}%   Read {Format.Rate(s.DiskReadBytesPerSec)}   Write {Format.Rate(s.DiskWriteBytesPerSec)}";
         Disk.Add(s.DiskActivePercent);

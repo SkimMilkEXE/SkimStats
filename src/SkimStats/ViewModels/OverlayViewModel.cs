@@ -15,6 +15,7 @@ public partial class OverlayViewModel : ViewModelBase
 
     [ObservableProperty] public partial string CpuText { get; set; } = "CPU --";
     [ObservableProperty] public partial string RamText { get; set; } = "RAM --";
+    [ObservableProperty] public partial string GpuText { get; set; } = "GPU --";
     [ObservableProperty] public partial string DiskText { get; set; } = "DISK --";
     [ObservableProperty] public partial string NetworkText { get; set; } = "NET --";
     [ObservableProperty] public partial string FpsText { get; set; } = "FPS --";
@@ -22,6 +23,7 @@ public partial class OverlayViewModel : ViewModelBase
     // sparkline data, only filled for stats that are shown with a graph
     [ObservableProperty] public partial double[]? CpuHistory { get; set; }
     [ObservableProperty] public partial double[]? RamHistory { get; set; }
+    [ObservableProperty] public partial double[]? GpuHistory { get; set; }
     [ObservableProperty] public partial double[]? DiskHistory { get; set; }
     [ObservableProperty] public partial double[]? NetworkHistory { get; set; }
     [ObservableProperty] public partial double[]? FpsHistory { get; set; }
@@ -57,12 +59,14 @@ public partial class OverlayViewModel : ViewModelBase
     {
         CpuText = $"CPU {s.CpuPercent:0}%";
         RamText = $"RAM {Format.Bytes(s.RamUsedBytes)} / {Format.Bytes(s.RamTotalBytes)}";
+        GpuText = s.GpuPercent is { } gpu ? $"GPU {gpu:0}%" : "GPU --";
         DiskText = $"DISK {s.DiskActivePercent:0}%";
         NetworkText = $"NET ↓{Format.Rate(s.NetDownBytesPerSec)} ↑{Format.Rate(s.NetUpBytesPerSec)}";
         FpsText = s.Fps is { } fps ? $"FPS {fps:0}" : "FPS --";
 
         CpuHistory = HistoryIf(Settings.ShowCpu && Settings.CpuGraph, x => x.CpuPercent);
         RamHistory = HistoryIf(Settings.ShowRam && Settings.RamGraph, x => x.RamPercent);
+        GpuHistory = HistoryIf(Settings.ShowGpu && Settings.GpuGraph, x => x.GpuPercent ?? 0);
         DiskHistory = HistoryIf(Settings.ShowDisk && Settings.DiskGraph, x => x.DiskActivePercent);
         // ponytail: download only, add an upload line if people ask for it
         NetworkHistory = HistoryIf(Settings.ShowNetwork && Settings.NetworkGraph, x => x.NetDownBytesPerSec);
