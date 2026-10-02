@@ -13,6 +13,8 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] public partial bool CpuGraph { get; set; }
     [ObservableProperty] public partial bool ShowRam { get; set; } = true;
     [ObservableProperty] public partial bool RamGraph { get; set; }
+    [ObservableProperty] public partial bool ShowGpu { get; set; } = true;
+    [ObservableProperty] public partial bool GpuGraph { get; set; }
     [ObservableProperty] public partial bool ShowDisk { get; set; }
     [ObservableProperty] public partial bool DiskGraph { get; set; }
     [ObservableProperty] public partial bool ShowNetwork { get; set; }

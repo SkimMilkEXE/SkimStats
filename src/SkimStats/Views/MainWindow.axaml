@@ -33,13 +33,15 @@
     </Window.DataTemplates>
 
     <Panel Margin="8">
-        <!-- 2x2 graphs with drive space along the bottom -->
-        <Grid RowDefinitions="*,*,Auto" ColumnDefinitions="*,*">
-            <ContentControl Grid.Row="0" Grid.Column="0" Content="{Binding Cpu}" />
-            <ContentControl Grid.Row="0" Grid.Column="1" Content="{Binding Ram}" />
-            <ContentControl Grid.Row="1" Grid.Column="0" Content="{Binding Disk}" />
-            <ContentControl Grid.Row="1" Grid.Column="1" Content="{Binding Network}" />
-            <DockPanel Grid.Row="2" Grid.ColumnSpan="2" Margin="8">
+        <!-- cpu, gpu, ram across the top, disk and network wider below, drive space along the bottom
+             (6 columns so the top three span 2 each and the bottom two span 3 each) -->
+        <Grid RowDefinitions="*,*,Auto" ColumnDefinitions="*,*,*,*,*,*">
+            <ContentControl Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Content="{Binding Cpu}" />
+            <ContentControl Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2" Content="{Binding Gpu}" />
+            <ContentControl Grid.Row="0" Grid.Column="4" Grid.ColumnSpan="2" Content="{Binding Ram}" />
+            <ContentControl Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Content="{Binding Disk}" />
+            <ContentControl Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="3" Content="{Binding Network}" />
+            <DockPanel Grid.Row="2" Grid.ColumnSpan="6" Margin="8">
                 <Button DockPanel.Dock="Right" Content="Overlay settings" Command="{Binding OpenSettingsCommand}" />
                 <TextBlock FontSize="16" Text="{Binding DrivesText}" TextWrapping="Wrap" VerticalAlignment="Center" />
             </DockPanel>

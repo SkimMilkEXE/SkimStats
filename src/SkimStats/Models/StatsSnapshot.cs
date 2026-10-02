@@ -9,6 +9,7 @@ public record StatsSnapshot(
     float CpuPercent,
     ulong RamUsedBytes,
     ulong RamTotalBytes,
+    double? GpuPercent, // null while warming up or when the pc has no gpu counters
     float DiskActivePercent,
     double DiskReadBytesPerSec,
     double DiskWriteBytesPerSec,

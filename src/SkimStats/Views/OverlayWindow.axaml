@@ -49,6 +49,11 @@
                              Height="{Binding Settings.FontSize}" IsVisible="{Binding Settings.CpuGraph}" />
                 <TextBlock Text="{Binding CpuText}" />
             </StackPanel>
+            <StackPanel Orientation="Horizontal" IsVisible="{Binding Settings.ShowGpu}">
+                <c:Sparkline Values="{Binding GpuHistory}" Maximum="100" Stroke="{Binding TextBrush}"
+                             Height="{Binding Settings.FontSize}" IsVisible="{Binding Settings.GpuGraph}" />
+                <TextBlock Text="{Binding GpuText}" />
+            </StackPanel>
             <StackPanel Orientation="Horizontal" IsVisible="{Binding Settings.ShowRam}">
                 <c:Sparkline Values="{Binding RamHistory}" Maximum="100" Stroke="{Binding TextBrush}"
                              Height="{Binding Settings.FontSize}" IsVisible="{Binding Settings.RamGraph}" />

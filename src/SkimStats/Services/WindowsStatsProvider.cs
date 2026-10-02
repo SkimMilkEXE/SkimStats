@@ -20,6 +20,7 @@ public sealed class WindowsStatsProvider : IStatsProvider
     private readonly PerformanceCounter _diskWriteCounter = new("PhysicalDisk", "Disk Write Bytes/sec", "_Total");
 
     private readonly NetworkRateTracker _network = new();
+    private readonly GpuUsageReader _gpu = new();
     private readonly FpsMonitor _fps;
 
     public WindowsStatsProvider(FpsMonitor fps)
@@ -58,6 +59,7 @@ public sealed class WindowsStatsProvider : IStatsProvider
             cpu,
             mem.TotalPhys - mem.AvailPhys,
             mem.TotalPhys,
+            _gpu.Read(),
             diskActive,
             _diskReadCounter.NextValue(),
             _diskWriteCounter.NextValue(),

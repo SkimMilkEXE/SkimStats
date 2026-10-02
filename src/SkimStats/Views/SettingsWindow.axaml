@@ -67,6 +67,12 @@
                         </Grid>
                         <Separator />
                         <Grid ColumnDefinitions="*,Auto,Auto">
+                            <TextBlock Classes="label" Text="GPU usage" />
+                            <CheckBox Grid.Column="1" Content="Graph" Margin="0,0,16,0" IsChecked="{Binding Settings.GpuGraph}" IsEnabled="{Binding Settings.ShowGpu}" />
+                            <ToggleSwitch Grid.Column="2" IsChecked="{Binding Settings.ShowGpu}" />
+                        </Grid>
+                        <Separator />
+                        <Grid ColumnDefinitions="*,Auto,Auto">
                             <TextBlock Classes="label" Text="RAM usage" />
                             <CheckBox Grid.Column="1" Content="Graph" Margin="0,0,16,0" IsChecked="{Binding Settings.RamGraph}" IsEnabled="{Binding Settings.ShowRam}" />
                             <ToggleSwitch Grid.Column="2" IsChecked="{Binding Settings.ShowRam}" />
