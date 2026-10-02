@@ -1,5 +1,6 @@
 using System;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using SkimStats.Services;
@@ -39,6 +40,12 @@ public partial class App : Application
 
             desktop.MainWindow = new MainWindow { DataContext = mainViewModel };
             desktop.Exit += (_, _) => _sampler?.Dispose();
+
+            // otherwise the hidden-from-taskbar overlay keeps the app alive after the main window closes
+            desktop.ShutdownMode = ShutdownMode.OnMainWindowClose;
+
+            if (_sampler is not null)
+                new OverlayWindow { DataContext = new OverlayViewModel(_sampler) }.Show();
         }
 
         base.OnFrameworkInitializationCompleted();
