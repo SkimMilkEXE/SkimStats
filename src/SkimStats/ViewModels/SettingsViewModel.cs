@@ -49,19 +49,31 @@ public partial class SettingsViewModel : ViewModelBase
     private string? _fpsGrantMessage;
 
     private readonly FpsMonitor _fps;
+    private readonly CpuTemperatureReader _cpuTemp;
+    private readonly Func<bool> _restartAsAdmin;
 
-    public SettingsViewModel(AppSettings settings, OverlayViewModel overlay, HotkeyService hotkey, FpsMonitor fps, IReadOnlyList<string> monitors)
+    // cpu temp status line, plus which fix-it button to offer
+    [ObservableProperty] public partial string CpuTempStatusText { get; set; } = "";
+    [ObservableProperty] public partial bool CpuTempNeedsAdmin { get; set; }
+    [ObservableProperty] public partial bool CpuTempNeedsDriver { get; set; }
+
+    public SettingsViewModel(AppSettings settings, OverlayViewModel overlay, HotkeyService hotkey, FpsMonitor fps,
+        CpuTemperatureReader cpuTemp, Func<bool> restartAsAdmin, IReadOnlyList<string> monitors)
     {
         Settings = settings;
         Overlay = overlay;
         Monitors = monitors;
         _hotkey = hotkey;
         _fps = fps;
+        _cpuTemp = cpuTemp;
+        _restartAsAdmin = restartAsAdmin;
         HotkeyText = HotkeyLabel();
         UpdateFpsStatus();
+        UpdateCpuTempStatus();
 
         Settings.PropertyChanged += OnSettingChanged;
         _fps.StatusChanged += OnFpsStatusChanged;
+        _cpuTemp.StatusChanged += OnCpuTempStatusChanged;
     }
 
     // called when the window closes so the long-lived settings and fps monitor don't keep this alive
@@ -69,6 +81,7 @@ public partial class SettingsViewModel : ViewModelBase
     {
         Settings.PropertyChanged -= OnSettingChanged;
         _fps.StatusChanged -= OnFpsStatusChanged;
+        _cpuTemp.StatusChanged -= OnCpuTempStatusChanged;
     }
 
     private void OnSettingChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -80,6 +93,36 @@ public partial class SettingsViewModel : ViewModelBase
 
     // status changes come from presentmon's thread
     private void OnFpsStatusChanged() => Avalonia.Threading.Dispatcher.UIThread.Post(UpdateFpsStatus);
+
+    // status changes come from the sensor's background thread
+    private void OnCpuTempStatusChanged() => Avalonia.Threading.Dispatcher.UIThread.Post(UpdateCpuTempStatus);
+
+    private void UpdateCpuTempStatus()
+    {
+        CpuTempNeedsAdmin = _cpuTemp.Status == CpuTempStatus.NeedsAdmin;
+        CpuTempNeedsDriver = _cpuTemp.Status == CpuTempStatus.NeedsDriver;
+        CpuTempStatusText = _cpuTemp.Status switch
+        {
+            CpuTempStatus.Starting => "Starting…",
+            CpuTempStatus.Running => "Reading the CPU sensor through PawnIO.",
+            CpuTempStatus.NeedsAdmin => "SkimStats has to run as admin to read the CPU sensor.",
+            CpuTempStatus.NeedsDriver => "Needs the free PawnIO driver. Install it, then turn this off and on again.",
+            CpuTempStatus.NoSensor => "No CPU temperature sensor found.",
+            CpuTempStatus.Failed => "Couldn't read the CPU sensor. Turn it off and on again to retry.",
+            _ => "Needs admin and the free PawnIO driver. PawnIO is a kernel driver, some anti-cheats may not like it.",
+        };
+    }
+
+    [RelayCommand]
+    private void RestartAsAdmin()
+    {
+        if (!_restartAsAdmin())
+            CpuTempStatusText = "Admin prompt was cancelled.";
+    }
+
+    [RelayCommand]
+    private void GetPawnIo() =>
+        Process.Start(new ProcessStartInfo("https://pawnio.eu/") { UseShellExecute = true });
 
     private void UpdateFpsStatus()
     {

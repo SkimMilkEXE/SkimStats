@@ -15,6 +15,10 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] public partial bool RamGraph { get; set; }
     [ObservableProperty] public partial bool ShowGpu { get; set; } = true;
     [ObservableProperty] public partial bool GpuGraph { get; set; }
+
+    // temperatures show next to cpu/gpu usage, cpu is opt-in since it needs admin + pawnio
+    [ObservableProperty] public partial bool ShowGpuTemp { get; set; } = true;
+    [ObservableProperty] public partial bool ShowCpuTemp { get; set; }
     [ObservableProperty] public partial bool ShowDisk { get; set; }
     [ObservableProperty] public partial bool DiskGraph { get; set; }
     [ObservableProperty] public partial bool ShowNetwork { get; set; }

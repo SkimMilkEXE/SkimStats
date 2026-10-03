@@ -26,8 +26,11 @@ public partial class MainViewModel : ViewModelBase
     private readonly Action? _openSettings;
 
     // app owns the settings window, this view model just asks for it
-    public MainViewModel(StatsSampler sampler, Action openSettings)
+    private readonly AppSettings? _settings;
+
+    public MainViewModel(StatsSampler sampler, AppSettings settings, Action openSettings)
     {
+        _settings = settings;
         _openSettings = openSettings;
         sampler.SnapshotTaken += OnSnapshot;
     }
@@ -49,13 +52,13 @@ public partial class MainViewModel : ViewModelBase
 
     private void OnSnapshot(StatsSnapshot s)
     {
-        Cpu.Text = $"CPU: {s.CpuPercent:0}%";
+        Cpu.Text = $"CPU: {Format.UsageWithTemp(s.CpuPercent, s.CpuTempC, _settings?.ShowCpuTemp == true)}";
         Cpu.Add(s.CpuPercent);
 
         Ram.Text = $"RAM: {Format.Bytes(s.RamUsedBytes)} / {Format.Bytes(s.RamTotalBytes)} ({s.RamPercent:0}%)";
         Ram.Add(s.RamPercent);
 
-        Gpu.Text = s.GpuPercent is { } gpu ? $"GPU: {gpu:0}%" : "GPU: --";
+        Gpu.Text = $"GPU: {Format.UsageWithTemp(s.GpuPercent, s.GpuTempC, _settings?.ShowGpuTemp == true)}";
         Gpu.Add(s.GpuPercent ?? 0);
 
         Disk.Text = $"Disk: {s.DiskActivePercent:0}%   Read {Format.Rate(s.DiskReadBytesPerSec)}   Write {Format.Rate(s.DiskWriteBytesPerSec)}";

@@ -18,4 +18,11 @@ public static class Format
     }
 
     public static string Rate(double bytesPerSec) => Bytes(bytesPerSec) + "/s";
+
+    // "21%" or "21% · 62°C", usage of null shows "--"
+    public static string UsageWithTemp(double? percent, double? tempC, bool showTemp)
+    {
+        var usage = percent is { } p ? $"{p:0}%" : "--";
+        return showTemp && tempC is { } t ? $"{usage} · {t:0}°C" : usage;
+    }
 }

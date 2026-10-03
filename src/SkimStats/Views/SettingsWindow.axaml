@@ -93,6 +93,38 @@
                 </Border>
             </StackPanel>
 
+            <!-- gpu temp is free, cpu temp needs admin + the pawnio driver so it explains what's missing -->
+            <StackPanel>
+                <TextBlock Classes="section" Text="Temperatures" />
+                <Border Classes="card">
+                    <StackPanel>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="GPU temperature" />
+                                <TextBlock Classes="hint" Text="From your graphics driver, same as Task Manager." />
+                            </StackPanel>
+                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding Settings.ShowGpuTemp}" />
+                        </Grid>
+                        <Separator />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="CPU temperature" />
+                                <TextBlock Classes="hint" Text="{Binding CpuTempStatusText}" />
+                            </StackPanel>
+                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding Settings.ShowCpuTemp}" />
+                        </Grid>
+                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0"
+                                    IsVisible="{Binding CpuTempNeedsAdmin}">
+                            <Button Content="Restart as admin" Command="{Binding RestartAsAdminCommand}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0"
+                                    IsVisible="{Binding CpuTempNeedsDriver}">
+                            <Button Content="Get PawnIO" Command="{Binding GetPawnIoCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
             <StackPanel>
                 <TextBlock Classes="section" Text="Position" />
                 <Border Classes="card">
