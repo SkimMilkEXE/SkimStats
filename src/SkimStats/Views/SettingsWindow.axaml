@@ -183,6 +183,11 @@
                             <TextBlock Classes="label" Text="Text color" />
                             <ColorPicker Grid.Column="1" Color="{Binding Settings.TextColor, Mode=TwoWay}" IsAlphaEnabled="False" />
                         </Grid>
+                        <Separator />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Classes="label" Text="Show SkimStats icon" />
+                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding Settings.ShowOverlayIcon}" />
+                        </Grid>
                     </StackPanel>
                 </Border>
             </StackPanel>

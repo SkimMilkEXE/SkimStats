@@ -40,6 +40,7 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] public partial double FontSize { get; set; } = 14;
     [ObservableProperty] public partial Color TextColor { get; set; } = Colors.White;
     [ObservableProperty] public partial double BackgroundOpacity { get; set; } = 0.6;
+    [ObservableProperty] public partial bool ShowOverlayIcon { get; set; } // off by default, keeps the overlay minimal
 
     [ObservableProperty] public partial Hotkey Hotkey { get; set; } = Hotkey.Default;
 
