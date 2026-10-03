@@ -12,8 +12,15 @@ namespace SkimStats.Views;
 public partial class OverlayWindow : Window
 {
     private const int EdgeMargin = 16; // gap from the screen edge in corner mode, in pixels
+    private const double MinOverlayWidth = 80;
+    private const double ResizeZoneWidth = 20; // wider than the grip so it is easy to grab even as the text width changes
 
     private IntPtr _hwnd;
+
+    // set while the user drags the resize grip
+    private bool _resizing;
+    private double _resizeStartWidth;
+    private int _resizeStartScreenX;
 
     public OverlayWindow()
     {
@@ -37,6 +44,7 @@ public partial class OverlayWindow : Window
         // size changes when stats or font size change, so corners need re-anchoring
         SizeChanged += (_, _) => ApplyPosition();
         PositionChanged += OnPositionChanged;
+        ApplySize();
         ApplyPosition();
     }
 
@@ -44,6 +52,8 @@ public partial class OverlayWindow : Window
     {
         if (e.PropertyName is nameof(AppSettings.Corner) or nameof(AppSettings.MonitorIndex))
             ApplyPosition();
+        else if (e.PropertyName == nameof(AppSettings.OverlayWidth))
+            ApplySize();
     }
 
     private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e)
@@ -64,14 +74,62 @@ public partial class OverlayWindow : Window
         if (!ViewModel.IsEditing || !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             return;
 
-        // switch to custom before moving, so corner re-anchoring doesn't fight the drag
+        // switch to custom before moving or resizing, so corner re-anchoring doesn't fight the drag
         var settings = ViewModel.Settings;
         settings.CustomX = Position.X;
         settings.CustomY = Position.Y;
         settings.Corner = OverlayCorner.Custom;
 
+        // the rightmost strip (where the blue grip is) resizes, anywhere else moves
+        if (e.GetPosition(this).X >= Bounds.Width - ResizeZoneWidth)
+        {
+            // screen coordinates, since the window itself changes size under the mouse
+            _resizing = true;
+            _resizeStartWidth = Bounds.Width;
+            _resizeStartScreenX = this.PointToScreen(e.GetPosition(this)).X;
+            e.Pointer.Capture(this);
+            e.Handled = true;
+            return;
+        }
+
         // returns right away, the new spot gets saved in OnPositionChanged
         BeginMoveDrag(e);
+    }
+
+    protected override void OnPointerMoved(PointerEventArgs e)
+    {
+        base.OnPointerMoved(e);
+        if (!_resizing)
+            return;
+
+        // screen pixels -> window units, so it tracks the mouse on high dpi screens too
+        int screenX = this.PointToScreen(e.GetPosition(this)).X;
+        double change = (screenX - _resizeStartScreenX) / DesktopScaling;
+        ViewModel.Settings.OverlayWidth = Math.Max(MinOverlayWidth, _resizeStartWidth + change);
+    }
+
+    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    {
+        base.OnPointerReleased(e);
+        if (!_resizing)
+            return;
+        _resizing = false;
+        e.Pointer.Capture(null);
+    }
+
+    // fixed width wraps the stats into rows, 0 lets the window fit the stacked list
+    private void ApplySize()
+    {
+        var width = ViewModel.Settings.OverlayWidth;
+        if (width > 0)
+        {
+            SizeToContent = SizeToContent.Height;
+            Width = width;
+        }
+        else
+        {
+            SizeToContent = SizeToContent.WidthAndHeight;
+        }
     }
 
     private void OnPositionChanged(object? sender, PixelPointEventArgs e)

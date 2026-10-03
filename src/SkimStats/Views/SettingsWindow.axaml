@@ -148,6 +148,15 @@
                             </StackPanel>
                             <ToggleButton Grid.Column="1" Content="Move overlay" IsChecked="{Binding Overlay.IsEditing}" Margin="12,0,0,0" />
                         </Grid>
+                        <Separator />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Size" />
+                                <TextBlock Classes="hint" Text="While moving, drag the blue right edge to fit stats in a row." />
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="Fit to content" Margin="12,0,0,0"
+                                    Command="{Binding FitOverlayToContentCommand}" IsEnabled="{Binding Overlay.HasFixedWidth}" />
+                        </Grid>
                     </StackPanel>
                 </Border>
             </StackPanel>

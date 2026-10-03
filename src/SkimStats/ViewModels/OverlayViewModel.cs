@@ -31,6 +31,12 @@ public partial class OverlayViewModel : ViewModelBase
     // true while the user is dragging the overlay into place
     [ObservableProperty] public partial bool IsEditing { get; set; }
 
+    // list when fitting to content, rows that wrap once the user picks a width
+    public bool HasFixedWidth => Settings.OverlayWidth > 0;
+    public Avalonia.Layout.Orientation StatsOrientation =>
+        HasFixedWidth ? Avalonia.Layout.Orientation.Horizontal : Avalonia.Layout.Orientation.Vertical;
+    public double StatsSpacing => HasFixedWidth ? 16 : 2; // gap between stats, wider when side by side
+
     public IBrush TextBrush => new SolidColorBrush(Settings.TextColor);
     public IBrush BackgroundBrush => new SolidColorBrush(Colors.Black, Settings.BackgroundOpacity);
 
@@ -52,6 +58,12 @@ public partial class OverlayViewModel : ViewModelBase
                 OnPropertyChanged(nameof(TextBrush));
             else if (e.PropertyName == nameof(AppSettings.BackgroundOpacity))
                 OnPropertyChanged(nameof(BackgroundBrush));
+            else if (e.PropertyName == nameof(AppSettings.OverlayWidth))
+            {
+                OnPropertyChanged(nameof(HasFixedWidth));
+                OnPropertyChanged(nameof(StatsOrientation));
+                OnPropertyChanged(nameof(StatsSpacing));
+            }
         };
     }
 

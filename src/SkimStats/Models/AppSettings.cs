@@ -32,6 +32,10 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] public partial int CustomX { get; set; }
     [ObservableProperty] public partial int CustomY { get; set; }
 
+    // overlay width set by dragging its edge, stats wrap into rows to fit
+    // 0 = fit to content, which stacks the stats in a list
+    [ObservableProperty] public partial double OverlayWidth { get; set; }
+
     // look
     [ObservableProperty] public partial double FontSize { get; set; } = 14;
     [ObservableProperty] public partial Color TextColor { get; set; } = Colors.White;
