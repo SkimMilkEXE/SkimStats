@@ -7,9 +7,11 @@ namespace SkimStats.Models;
 public record StatsSnapshot(
     DateTime Timestamp,
     float CpuPercent,
+    double? CpuTempC, // null unless cpu temps are on and readable (admin + pawnio)
     ulong RamUsedBytes,
     ulong RamTotalBytes,
     double? GpuPercent, // null while warming up or when the pc has no gpu counters
+    double? GpuTempC, // null when the graphics driver doesn't report it
     float DiskActivePercent,
     double DiskReadBytesPerSec,
     double DiskWriteBytesPerSec,

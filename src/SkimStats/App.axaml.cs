@@ -19,6 +19,8 @@ public partial class App : Application
     private StatsSampler? _sampler;
     private HotkeyService? _hotkey;
     private FpsMonitor? _fps;
+    private CpuTemperatureReader? _cpuTemp;
+    private IClassicDesktopStyleApplicationLifetime? _desktop;
     private MainWindow? _mainWindow;
     private OverlayWindow? _overlay;
     private OverlayViewModel? _overlayViewModel;
@@ -35,6 +37,11 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            _desktop = desktop;
+
+            // after "restart as admin" the old copy is still closing, let it save settings
+            // and release the hotkey before we load and register them
+            WaitForPreviousInstance(desktop.Args);
             _settings = SettingsService.Load();
 
             MainViewModel mainViewModel;
@@ -45,8 +52,9 @@ public partial class App : Application
 
                 // one sampler shared by every view
                 _fps = new FpsMonitor();
-                _sampler = new StatsSampler(new WindowsStatsProvider(_fps), TimeSpan.FromSeconds(1));
-                mainViewModel = new MainViewModel(_sampler, ShowSettings);
+                _cpuTemp = new CpuTemperatureReader();
+                _sampler = new StatsSampler(new WindowsStatsProvider(_fps, _cpuTemp), TimeSpan.FromSeconds(1));
+                mainViewModel = new MainViewModel(_sampler, _settings, ShowSettings);
                 _sampler.Start();
             }
             catch (Exception ex)
@@ -88,6 +96,8 @@ public partial class App : Application
             _settings.PropertyChanged += OnSettingChanged;
             if (_settings.ShowFps && OperatingSystem.IsWindows())
                 _fps?.Start();
+            if (_settings.ShowCpuTemp && OperatingSystem.IsWindows())
+                _cpuTemp?.Start();
 
             desktop.Exit += (_, _) =>
             {
@@ -96,6 +106,7 @@ public partial class App : Application
                 {
                     _hotkey?.Dispose();
                     _fps?.Dispose();
+                    _cpuTemp?.Dispose();
                 }
                 _sampler?.Dispose();
             };
@@ -142,6 +153,15 @@ public partial class App : Application
         if (e.PropertyName == nameof(AppSettings.Hotkey) && _toggleMenuItem is not null)
             _toggleMenuItem.Header = ToggleMenuLabel();
 
+        // the cpu sensor driver only stays open while cpu temps are shown
+        if (e.PropertyName == nameof(AppSettings.ShowCpuTemp) && OperatingSystem.IsWindows())
+        {
+            if (_settings.ShowCpuTemp)
+                _cpuTemp?.Start();
+            else
+                _cpuTemp?.Stop();
+        }
+
         // presentmon only runs while fps is shown
         if (e.PropertyName == nameof(AppSettings.ShowFps) && OperatingSystem.IsWindows())
         {
@@ -164,7 +184,7 @@ public partial class App : Application
 
     private void ShowSettings()
     {
-        if (!OperatingSystem.IsWindows() || _overlay is null || _overlayViewModel is null || _hotkey is null || _fps is null)
+        if (!OperatingSystem.IsWindows() || _overlay is null || _overlayViewModel is null || _hotkey is null || _fps is null || _cpuTemp is null)
             return;
 
         // only one settings window at a time
@@ -181,7 +201,7 @@ public partial class App : Application
 
         _settingsWindow = new SettingsWindow
         {
-            DataContext = new SettingsViewModel(_settings, _overlayViewModel, _hotkey, _fps, monitors),
+            DataContext = new SettingsViewModel(_settings, _overlayViewModel, _hotkey, _fps, _cpuTemp, RestartAsAdmin, monitors),
         };
         _settingsWindow.Closed += (_, _) =>
         {
@@ -202,5 +222,45 @@ public partial class App : Application
             _overlay.Hide();
         else
             _overlay.Show();
+    }
+
+    // starts an elevated copy (one uac prompt) and closes this one, false if the prompt was cancelled
+    private bool RestartAsAdmin()
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
+                Environment.ProcessPath!, $"--wait-for-pid {Environment.ProcessId}")
+            {
+                UseShellExecute = true,
+                Verb = "runas",
+            });
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            return false; // prompt cancelled or blocked
+        }
+
+        _quitting = true;
+        _desktop?.Shutdown();
+        return true;
+    }
+
+    private static void WaitForPreviousInstance(string[]? args)
+    {
+        if (args is null)
+            return;
+        int index = Array.IndexOf(args, "--wait-for-pid");
+        if (index < 0 || index + 1 >= args.Length || !int.TryParse(args[index + 1], out int pid))
+            return;
+        try
+        {
+            using var previous = System.Diagnostics.Process.GetProcessById(pid);
+            previous.WaitForExit(5000);
+        }
+        catch (ArgumentException)
+        {
+            // already gone
+        }
     }
 }

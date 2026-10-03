@@ -57,9 +57,9 @@ public partial class OverlayViewModel : ViewModelBase
 
     private void OnSnapshot(StatsSnapshot s)
     {
-        CpuText = $"CPU {s.CpuPercent:0}%";
+        CpuText = $"CPU {Format.UsageWithTemp(s.CpuPercent, s.CpuTempC, Settings.ShowCpuTemp)}";
         RamText = $"RAM {Format.Bytes(s.RamUsedBytes)} / {Format.Bytes(s.RamTotalBytes)}";
-        GpuText = s.GpuPercent is { } gpu ? $"GPU {gpu:0}%" : "GPU --";
+        GpuText = $"GPU {Format.UsageWithTemp(s.GpuPercent, s.GpuTempC, Settings.ShowGpuTemp)}";
         DiskText = $"DISK {s.DiskActivePercent:0}%";
         NetworkText = $"NET ↓{Format.Rate(s.NetDownBytesPerSec)} ↑{Format.Rate(s.NetUpBytesPerSec)}";
         FpsText = s.Fps is { } fps ? $"FPS {fps:0}" : "FPS --";

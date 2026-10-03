@@ -21,11 +21,14 @@ public sealed class WindowsStatsProvider : IStatsProvider
 
     private readonly NetworkRateTracker _network = new();
     private readonly GpuUsageReader _gpu = new();
+    private readonly GpuTemperatureReader _gpuTemp = new();
     private readonly FpsMonitor _fps;
+    private readonly CpuTemperatureReader _cpuTemp;
 
-    public WindowsStatsProvider(FpsMonitor fps)
+    public WindowsStatsProvider(FpsMonitor fps, CpuTemperatureReader cpuTemp)
     {
         _fps = fps;
+        _cpuTemp = cpuTemp;
 
         // first read of rate counters always returns 0, throw it away
         _cpuCounter.NextValue();
@@ -57,9 +60,11 @@ public sealed class WindowsStatsProvider : IStatsProvider
         return new StatsSnapshot(
             DateTime.Now,
             cpu,
+            _cpuTemp.Read(),
             mem.TotalPhys - mem.AvailPhys,
             mem.TotalPhys,
             _gpu.Read(),
+            _gpuTemp.Read(),
             diskActive,
             _diskReadCounter.NextValue(),
             _diskWriteCounter.NextValue(),
@@ -75,6 +80,7 @@ public sealed class WindowsStatsProvider : IStatsProvider
         _diskIdleCounter.Dispose();
         _diskReadCounter.Dispose();
         _diskWriteCounter.Dispose();
+        _gpuTemp.Dispose();
     }
 
     [StructLayout(LayoutKind.Sequential)]
