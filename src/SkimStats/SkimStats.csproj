@@ -4,6 +4,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- icon baked into the exe, shown in file explorer and the taskbar -->
+    <ApplicationIcon>Assets\app-icon.ico</ApplicationIcon>
 
     <!-- shows up in the exe's file properties -->
     <Version>1.0.0</Version>
