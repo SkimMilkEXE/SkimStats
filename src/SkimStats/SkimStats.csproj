@@ -14,6 +14,11 @@
     <Authors>Richard Hurley</Authors>
     <Description>Lightweight system monitor with a click-through game overlay.</Description>
     <Copyright>Copyright © 2026 Richard Hurley</Copyright>
+
+    <!-- single-file publish: bundle skia's native dlls into the exe and compress it (~88mb -> ~50mb) -->
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
   </PropertyGroup>
 
   <ItemGroup>

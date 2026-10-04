@@ -18,7 +18,7 @@ public record StatsSnapshot(
     IReadOnlyList<DriveSpace> Drives,
     double NetDownBytesPerSec,
     double NetUpBytesPerSec,
-    double? Fps) // null when fps is off or the window in front isn't drawing
+    SkimStats.Services.FrameStats? Frames) // null when fps is off or the window in front isn't drawing
 {
     public double RamPercent => RamTotalBytes == 0 ? 0 : 100.0 * RamUsedBytes / RamTotalBytes;
 }

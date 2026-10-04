@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:SkimStats.ViewModels"
+        xmlns:sys="using:System"
         x:Class="SkimStats.Views.SettingsWindow"
         x:DataType="vm:SettingsViewModel"
         Icon="/Assets/app-icon.ico"
@@ -44,6 +45,42 @@
                 <TextBlock Classes="hint" Text="Changes show on the overlay right away and save when you close this window." />
             </StackPanel>
 
+            <!-- always, fullscreen apps only, or a list of games picked by exe name -->
+            <StackPanel>
+                <TextBlock Classes="section" Text="When to show" />
+                <Border Classes="card">
+                    <StackPanel>
+                        <Grid ColumnDefinitions="*,260">
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Show the overlay" />
+                                <TextBlock Classes="hint" Text="In auto modes the hotkey hides it until you switch apps." />
+                            </StackPanel>
+                            <ComboBox Grid.Column="1" HorizontalAlignment="Stretch"
+                                      ItemsSource="{Binding Modes}" SelectedItem="{Binding SelectedMode}" />
+                        </Grid>
+                        <StackPanel IsVisible="{Binding IsGameListMode}" Spacing="6" Margin="0,10,0,0">
+                            <TextBlock Classes="hint" Text="Matched by exe name, so updates and moved installs still count." />
+                            <ItemsControl ItemsSource="{Binding Settings.Games}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="sys:String">
+                                        <Grid ColumnDefinitions="*,Auto" Margin="0,2">
+                                            <TextBlock Text="{Binding}" VerticalAlignment="Center" />
+                                            <Button Grid.Column="1" Content="Remove" CommandParameter="{Binding}"
+                                                    Command="{Binding $parent[ItemsControl].((vm:SettingsViewModel)DataContext).RemoveGameCommand}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <ComboBox x:Name="RunningAppsBox" HorizontalAlignment="Stretch" PlaceholderText="Add a running app…"
+                                          ItemsSource="{Binding RunningApps}" SelectedItem="{Binding AddRunningApp}" />
+                                <Button Grid.Column="1" Content="Browse…" Margin="8,0,0,0" Click="OnBrowseGame" />
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
             <!-- which stats, and whether each one gets a mini graph -->
             <StackPanel>
                 <TextBlock Classes="section" Text="Stats" />
@@ -57,6 +94,11 @@
                             <CheckBox Grid.Column="1" Content="Graph" Margin="12,0,16,0" IsChecked="{Binding Settings.FpsGraph}" IsEnabled="{Binding Settings.ShowFps}" />
                             <ToggleSwitch Grid.Column="2" IsChecked="{Binding Settings.ShowFps}" />
                         </Grid>
+                        <WrapPanel Margin="0,6,0,0" ItemSpacing="16" IsEnabled="{Binding Settings.ShowFps}">
+                            <CheckBox Content="1% low" IsChecked="{Binding Settings.ShowFpsLow}" />
+                            <CheckBox Content="Frame time" IsChecked="{Binding Settings.ShowFrameTime}" />
+                            <CheckBox Content="Graph frame time instead of FPS" IsChecked="{Binding Settings.FpsGraphFrameTime}" />
+                        </WrapPanel>
                         <Button Content="Allow FPS tracking" Margin="0,8,0,0" HorizontalAlignment="Left"
                                 Command="{Binding GrantFpsPermissionCommand}" IsVisible="{Binding CanGrantFpsPermission}" />
                         <Separator />

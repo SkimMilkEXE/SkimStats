@@ -74,7 +74,7 @@ public partial class OverlayViewModel : ViewModelBase
         GpuText = $"GPU {Format.UsageWithTemp(s.GpuPercent, s.GpuTempC, Settings.ShowGpuTemp)}";
         DiskText = $"DISK {s.DiskActivePercent:0}%";
         NetworkText = $"NET ↓{Format.Rate(s.NetDownBytesPerSec)} ↑{Format.Rate(s.NetUpBytesPerSec)}";
-        FpsText = s.Fps is { } fps ? $"FPS {fps:0}" : "FPS --";
+        FpsText = Format.FpsLine(s.Frames, Settings.ShowFpsLow, Settings.ShowFrameTime);
 
         CpuHistory = HistoryIf(Settings.ShowCpu && Settings.CpuGraph, x => x.CpuPercent);
         RamHistory = HistoryIf(Settings.ShowRam && Settings.RamGraph, x => x.RamPercent);
@@ -82,7 +82,9 @@ public partial class OverlayViewModel : ViewModelBase
         DiskHistory = HistoryIf(Settings.ShowDisk && Settings.DiskGraph, x => x.DiskActivePercent);
         // ponytail: download only, add an upload line if people ask for it
         NetworkHistory = HistoryIf(Settings.ShowNetwork && Settings.NetworkGraph, x => x.NetDownBytesPerSec);
-        FpsHistory = HistoryIf(Settings.ShowFps && Settings.FpsGraph, x => x.Fps ?? 0);
+        // frame time graph uses each second's worst frame, so a single stutter shows as a spike
+        FpsHistory = HistoryIf(Settings.ShowFps && Settings.FpsGraph,
+            x => Settings.FpsGraphFrameTime ? x.Frames?.WorstFrameTimeMs ?? 0 : x.Frames?.Fps ?? 0);
     }
 
     // skips the copy entirely when the graph is hidden

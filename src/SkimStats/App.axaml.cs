@@ -20,6 +20,7 @@ public partial class App : Application
     private HotkeyService? _hotkey;
     private FpsMonitor? _fps;
     private CpuTemperatureReader? _cpuTemp;
+    private readonly OverlayAutoShow _autoShow = new();
     private IClassicDesktopStyleApplicationLifetime? _desktop;
     private MainWindow? _mainWindow;
     private OverlayWindow? _overlay;
@@ -83,6 +84,8 @@ public partial class App : Application
                 _overlayViewModel = new OverlayViewModel(_sampler, _settings);
                 _overlay = new OverlayWindow { DataContext = _overlayViewModel };
                 _overlay.Show();
+                // once a second is plenty, the stats tick already runs at that rate
+                _sampler.SnapshotTaken += _ => UpdateOverlayVisibility();
             }
 
             if (OperatingSystem.IsWindows())
@@ -153,6 +156,9 @@ public partial class App : Application
         if (e.PropertyName == nameof(AppSettings.Hotkey) && _toggleMenuItem is not null)
             _toggleMenuItem.Header = ToggleMenuLabel();
 
+        if (e.PropertyName == nameof(AppSettings.OverlayMode))
+            UpdateOverlayVisibility();
+
         // the cpu sensor driver only stays open while cpu temps are shown
         if (e.PropertyName == nameof(AppSettings.ShowCpuTemp) && OperatingSystem.IsWindows())
         {
@@ -218,11 +224,24 @@ public partial class App : Application
     {
         if (_overlay is null)
             return;
-        if (_overlay.IsVisible)
-            _overlay.Hide();
-        else
-            _overlay.Show();
+        _autoShow.Toggle(_settings.OverlayMode, ForegroundApp(), _overlay.IsVisible);
+        UpdateOverlayVisibility();
     }
+
+    private void UpdateOverlayVisibility()
+    {
+        if (_overlay is null || _overlayViewModel is null)
+            return;
+        bool show = _autoShow.ShouldShow(_settings.OverlayMode, ForegroundApp(), _settings.Games,
+            _overlayViewModel.IsEditing, Environment.ProcessId);
+        if (show && !_overlay.IsVisible)
+            _overlay.Show();
+        else if (!show && _overlay.IsVisible)
+            _overlay.Hide();
+    }
+
+    private static ForegroundApp? ForegroundApp() =>
+        OperatingSystem.IsWindows() ? Win32Interop.GetForegroundApp() : null;
 
     // starts an elevated copy (one uac prompt) and closes this one, false if the prompt was cancelled
     private bool RestartAsAdmin()

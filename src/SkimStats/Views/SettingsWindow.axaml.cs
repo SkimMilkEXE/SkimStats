@@ -2,6 +2,7 @@ using System.Runtime.Versioning;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using SkimStats.Models;
 using SkimStats.ViewModels;
 
@@ -16,6 +17,20 @@ public partial class SettingsWindow : Window
 
         // tunnel so we see keys before the focused button does
         AddHandler(KeyDownEvent, OnKeyDownWhileRecording, RoutingStrategies.Tunnel);
+
+        // fresh list of running apps every time the dropdown opens
+        RunningAppsBox.DropDownOpened += (_, _) => (DataContext as SettingsViewModel)?.RefreshRunningApps();
+    }
+
+    private async void OnBrowseGame(object? sender, RoutedEventArgs e)
+    {
+        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Pick a game's .exe",
+            FileTypeFilter = [new FilePickerFileType("Programs") { Patterns = ["*.exe"] }],
+        });
+        if (files.Count > 0 && DataContext is SettingsViewModel vm)
+            vm.AddGame(files[0].Name);
     }
 
     protected override void OnClosed(System.EventArgs e)

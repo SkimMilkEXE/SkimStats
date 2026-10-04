@@ -69,6 +69,95 @@ public static class Win32Interop
         return (int)pid;
     }
 
+    // the app in front: its process, exe name, and whether it's a fullscreen (or borderless) window
+    public static ForegroundApp? GetForegroundApp()
+    {
+        var hwnd = GetForegroundWindow();
+        if (hwnd == IntPtr.Zero)
+            return null;
+        GetWindowThreadProcessId(hwnd, out var pid);
+
+        string exe;
+        try
+        {
+            using var process = System.Diagnostics.Process.GetProcessById((int)pid);
+            exe = process.ProcessName + ".exe";
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        {
+            exe = ""; // closed in the meantime
+        }
+
+        return new ForegroundApp((int)pid, exe, IsFullscreenWindow(hwnd));
+    }
+
+    private static bool IsFullscreenWindow(IntPtr hwnd)
+    {
+        // the desktop is monitor sized too, but it's not a game
+        if (hwnd == GetShellWindow() || ClassName(hwnd) is "Progman" or "WorkerW")
+            return false;
+
+        // games in fullscreen or borderless mode have no title bar, maximized apps do
+        var style = (long)GetWindowLongPtr(hwnd, GWL_STYLE);
+        if ((style & WS_CAPTION) == WS_CAPTION)
+            return false;
+
+        if (!GetWindowRect(hwnd, out var window))
+            return false;
+        var info = new MonitorInfo { Size = (uint)Marshal.SizeOf<MonitorInfo>() };
+        if (!GetMonitorInfo(MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST), ref info))
+            return false;
+        return CoversMonitor(window, info.Monitor);
+    }
+
+    public static bool CoversMonitor(Rect window, Rect monitor) =>
+        window.Left <= monitor.Left && window.Top <= monitor.Top &&
+        window.Right >= monitor.Right && window.Bottom >= monitor.Bottom;
+
+    private static string ClassName(IntPtr hwnd)
+    {
+        var name = new System.Text.StringBuilder(64);
+        GetClassName(hwnd, name, name.Capacity);
+        return name.ToString();
+    }
+
+    private const int GWL_STYLE = -16;
+    private const long WS_CAPTION = 0xC00000;
+    private const uint MONITOR_DEFAULTTONEAREST = 2;
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Rect
+    {
+        public int Left, Top, Right, Bottom;
+        public Rect(int left, int top, int right, int bottom) => (Left, Top, Right, Bottom) = (left, top, right, bottom);
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MonitorInfo
+    {
+        public uint Size;
+        public Rect Monitor;
+        public Rect WorkArea;
+        public uint Flags;
+    }
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetShellWindow();
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int GetClassName(IntPtr hwnd, System.Text.StringBuilder name, int maxCount);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetWindowRect(IntPtr hwnd, out Rect rect);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint flags);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo info);
+
     [DllImport("user32.dll")]
     private static extern IntPtr GetForegroundWindow();
 

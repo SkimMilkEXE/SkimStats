@@ -12,6 +12,11 @@ namespace SkimStats.Services;
 
 public enum FpsStatus { Off, Running, NeedsPermission, Missing, Failed }
 
+// what the overlay shows for the game in front
+// fps and frame time cover the last second, the 1% low covers the last 10 seconds,
+// worst frame time is the slowest frame of the last second (spikes = stutter)
+public record FrameStats(double Fps, double OnePercentLowFps, double FrameTimeMs, double WorstFrameTimeMs);
+
 // fps for the window in front, using intel presentmon as a helper process
 // presentmon reads the frame events windows already logs (etw), nothing touches the game itself
 [SupportedOSPlatform("windows")]
@@ -19,6 +24,7 @@ public sealed class FpsMonitor : IDisposable
 {
     private const string SessionName = "SkimStats";
     private const double WindowMs = 1000;        // average fps over the last second of frames
+    private const double LowWindowMs = 10000;    // 1% low needs more frames, 1% of one second is barely one frame
     private const long StaleAfterMs = 2000;      // no frames for this long = app isn't drawing (minimized, paused)
     private const string PerformanceLogUsersSid = "S-1-5-32-559";
 
@@ -158,13 +164,13 @@ public sealed class FpsMonitor : IDisposable
     }
 
     // null when the foreground app isn't drawing frames (or is skimstats itself)
-    public double? ForegroundFps()
+    public FrameStats? ForegroundFrameStats()
     {
         int pid = Win32Interop.ForegroundProcessId();
-        return pid == 0 || pid == Environment.ProcessId ? null : FpsFor(pid);
+        return pid == 0 || pid == Environment.ProcessId ? null : FrameStatsFor(pid);
     }
 
-    public double? FpsFor(int pid)
+    public FrameStats? FrameStatsFor(int pid)
     {
         long now = Environment.TickCount64;
         lock (_lock)
@@ -174,9 +180,32 @@ public sealed class FpsMonitor : IDisposable
                 _frames.Remove(stale);
 
             return _frames.TryGetValue(pid, out var frames) && frames.Times.Count > 0
-                ? AverageFps(frames.Times.Select(f => f.FrameMs).ToList())
+                ? ComputeStats(frames.Times.ToList())
                 : null;
         }
+    }
+
+    // frames are (timestamp, frame time) oldest first, covering up to the last 10 seconds
+    public static FrameStats ComputeStats(IReadOnlyList<(double TimeMs, double FrameMs)> frames)
+    {
+        double newest = frames[^1].TimeMs;
+        var lastSecond = frames.Where(f => f.TimeMs >= newest - WindowMs).Select(f => f.FrameMs).ToList();
+        return new FrameStats(
+            AverageFps(lastSecond),
+            OnePercentLowFps(frames.Select(f => f.FrameMs).ToList()),
+            lastSecond.Average(),
+            lastSecond.Max());
+    }
+
+    // average fps of the slowest 1% of frames (at least one frame)
+    // e.g. 990 frames at 7ms and 10 at 20ms -> the 10 slow ones decide it -> 50 fps
+    // (a plain 99th percentile would land on a 7ms frame here and hide the stutter)
+    public static double OnePercentLowFps(IReadOnlyCollection<double> frameTimesMs)
+    {
+        if (frameTimesMs.Count == 0)
+            return 0;
+        int count = Math.Max(1, (int)Math.Ceiling(frameTimesMs.Count * 0.01));
+        return AverageFps(frameTimesMs.OrderDescending().Take(count).ToList());
     }
 
     // average fps from frame times, e.g. sixty frames of 16.67ms -> 60
@@ -250,7 +279,7 @@ public sealed class FpsMonitor : IDisposable
 
             frames.Times.Enqueue((timeMs, frameMs));
             frames.LastSeen = Environment.TickCount64;
-            while (frames.Times.Peek().TimeMs < timeMs - WindowMs)
+            while (frames.Times.Peek().TimeMs < timeMs - LowWindowMs)
                 frames.Times.Dequeue();
         }
     }

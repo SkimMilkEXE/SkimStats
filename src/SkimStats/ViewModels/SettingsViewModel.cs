@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.Versioning;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -31,6 +32,84 @@ public partial class SettingsViewModel : ViewModelBase
         new(OverlayCorner.BottomRight, "Bottom right"),
         new(OverlayCorner.Custom, "Custom (dragged)"),
     ];
+
+    // when the overlay shows, friendly names for the dropdown
+    public record ModeOption(OverlayMode Value, string Name)
+    {
+        public override string ToString() => Name;
+    }
+
+    public ModeOption[] Modes { get; } =
+    [
+        new(OverlayMode.Always, "Always"),
+        new(OverlayMode.Fullscreen, "When a fullscreen app is in front"),
+        new(OverlayMode.GameList, "Only in my games"),
+    ];
+
+    public ModeOption SelectedMode
+    {
+        get => Array.Find(Modes, m => m.Value == Settings.OverlayMode) ?? Modes[0];
+        set
+        {
+            Settings.OverlayMode = value.Value;
+            OnPropertyChanged(nameof(IsGameListMode));
+        }
+    }
+
+    public bool IsGameListMode => Settings.OverlayMode == OverlayMode.GameList;
+
+    // apps with a window right now, shown in the "add a running app" dropdown
+    public record RunningApp(string Exe, string Title)
+    {
+        public override string ToString() => $"{Title} ({Exe})";
+    }
+
+    [ObservableProperty] public partial RunningApp[] RunningApps { get; set; } = [];
+
+    // picking one adds it to the list, then the dropdown resets to its placeholder
+    public RunningApp? AddRunningApp
+    {
+        get => null;
+        set
+        {
+            if (value is not null)
+                AddGame(value.Exe);
+            OnPropertyChanged();
+        }
+    }
+
+    public void RefreshRunningApps()
+    {
+        var apps = new List<RunningApp>();
+        foreach (var process in Process.GetProcesses())
+        {
+            using (process)
+            {
+                try
+                {
+                    // only apps with a visible window, and not skimstats itself
+                    if (process.Id == Environment.ProcessId || process.MainWindowHandle == IntPtr.Zero || string.IsNullOrWhiteSpace(process.MainWindowTitle))
+                        continue;
+                    apps.Add(new RunningApp(OverlayAutoShow.NormalizeExe(process.ProcessName), process.MainWindowTitle));
+                }
+                catch (InvalidOperationException)
+                {
+                    // exited while we were looking
+                }
+            }
+        }
+        RunningApps = apps.OrderBy(a => a.Title, StringComparer.OrdinalIgnoreCase).ToArray();
+    }
+
+    public void AddGame(string pathOrExe)
+    {
+        var exe = OverlayAutoShow.NormalizeExe(pathOrExe);
+        if (!Settings.Games.Contains(exe))
+            Settings.Games.Add(exe);
+    }
+
+    [RelayCommand]
+    private void RemoveGame(string exe) => Settings.Games.Remove(exe);
 
     public CornerOption SelectedCorner
     {

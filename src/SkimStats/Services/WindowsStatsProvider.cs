@@ -71,7 +71,7 @@ public sealed class WindowsStatsProvider : IStatsProvider
             drives,
             down,
             up,
-            _fps.Status == FpsStatus.Running ? _fps.ForegroundFps() : null);
+            _fps.Status == FpsStatus.Running ? _fps.ForegroundFrameStats() : null);
     }
 
     public void Dispose()

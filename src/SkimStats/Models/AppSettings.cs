@@ -1,5 +1,7 @@
+using System.Collections.ObjectModel;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using SkimStats.Services;
 
 namespace SkimStats.Models;
 
@@ -25,6 +27,13 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] public partial bool NetworkGraph { get; set; }
     [ObservableProperty] public partial bool ShowFps { get; set; } // off by default, runs presentmon
     [ObservableProperty] public partial bool FpsGraph { get; set; }
+    [ObservableProperty] public partial bool ShowFpsLow { get; set; } = true;   // "· 1% 97"
+    [ObservableProperty] public partial bool ShowFrameTime { get; set; }        // "· 6.9 ms"
+    [ObservableProperty] public partial bool FpsGraphFrameTime { get; set; }    // graph frame time spikes instead of fps
+
+    // when the overlay is on screen: always, whenever a fullscreen app is in front, or only for listed games
+    [ObservableProperty] public partial OverlayMode OverlayMode { get; set; } = OverlayMode.Always;
+    public ObservableCollection<string> Games { get; set; } = []; // exe names like "eldenring.exe"
 
     // position, monitor is ignored for custom since the drag already picked the spot
     [ObservableProperty] public partial OverlayCorner Corner { get; set; } = OverlayCorner.TopLeft;

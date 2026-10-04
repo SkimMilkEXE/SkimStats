@@ -19,6 +19,19 @@ public static class Format
 
     public static string Rate(double bytesPerSec) => Bytes(bytesPerSec) + "/s";
 
+    // "FPS 144 · 1% 97 · 6.9 ms", parts after fps are optional, "FPS --" when nothing is drawing
+    public static string FpsLine(SkimStats.Services.FrameStats? frames, bool showLow, bool showFrameTime)
+    {
+        if (frames is null)
+            return "FPS --";
+        var text = $"FPS {frames.Fps:0}";
+        if (showLow)
+            text += $" · 1% {frames.OnePercentLowFps:0}";
+        if (showFrameTime)
+            text += $" · {frames.FrameTimeMs:0.0} ms";
+        return text;
+    }
+
     // "21%" or "21% · 62°C", usage of null shows "--"
     public static string UsageWithTemp(double? percent, double? tempC, bool showTemp)
     {
