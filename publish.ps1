@@ -9,4 +9,5 @@ if ($LASTEXITCODE -ne 0) { throw "publish failed" }
 
 # only the exe, skia's native .pdb files get left out
 Copy-Item (Join-Path $out "SkimStats.exe") (Join-Path $root "artifacts\SkimStats.exe") -Force
+Remove-Item $out -Recurse -Force
 "built $(Join-Path $root "artifacts\SkimStats.exe")"
