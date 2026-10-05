@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/overlay.gif" alt="SkimStats overlay running on top of a game">
+  <img src="docs/overlay-in-game.png" alt="SkimStats overlay in the top right corner of a game">
 </p>
 
 ## Features
@@ -25,9 +25,11 @@
 - Starts minimized and can launch with Windows
 - **Light on resources**: the overlay uses well under 1% CPU
 
-| Main window | Settings |
-|---|---|
-| ![Main window with live graphs](docs/main-window.png) | ![Overlay settings](docs/settings.png) |
+<p align="center">
+  <img src="docs/overlay.png" alt="Overlay close-up showing FPS, CPU and GPU">
+</p>
+
+![Main window with live CPU, GPU, RAM, disk and network graphs](docs/main-window.png)
 
 ## Install
 
