@@ -32,6 +32,11 @@
         </DataTemplate>
     </Window.DataTemplates>
 
+    <DockPanel>
+    <!-- footer credit, same as the other skimmilk apps -->
+    <TextBlock DockPanel.Dock="Bottom" Text="Built by SkimMilk.EXE" FontSize="11" Opacity="0.6"
+               HorizontalAlignment="Center" Margin="0,0,0,6" />
+
     <Panel Margin="8">
         <!-- cpu, gpu, ram across the top, disk and network wider below, drive space along the bottom
              (6 columns so the top three span 2 each and the bottom two span 3 each) -->
@@ -52,5 +57,6 @@
                    HorizontalAlignment="Center" VerticalAlignment="Center"
                    IsVisible="{Binding Error, Converter={x:Static ObjectConverters.IsNotNull}}" />
     </Panel>
+    </DockPanel>
 
 </Window>

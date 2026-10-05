@@ -29,6 +29,15 @@ public class OverlayAutoShowTests
     }
 
     [Fact]
+    public void FullscreenModeSkipsBrowsersPlayingVideo()
+    {
+        var auto = new OverlayAutoShow();
+        var youtube = new ForegroundApp(300, "Chrome.exe", IsFullscreen: true);
+
+        Assert.False(auto.ShouldShow(OverlayMode.Fullscreen, youtube, [], editing: false, Own));
+    }
+
+    [Fact]
     public void GameListMatchesExeNamesIgnoringCase()
     {
         var auto = new OverlayAutoShow();

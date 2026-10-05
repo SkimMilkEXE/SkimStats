@@ -53,10 +53,20 @@ public sealed class OverlayAutoShow
         }
     }
 
+    // fullscreen but not games: browsers playing video, video players, slideshows
+    // ponytail: fixed list, the game list mode covers anything this misses
+    private static readonly HashSet<string> NotGames =
+    [
+        "chrome.exe", "msedge.exe", "firefox.exe", "opera.exe", "brave.exe", "vivaldi.exe", "arc.exe", "iexplore.exe",
+        "vlc.exe", "mpv.exe", "mpc-hc64.exe", "mpc-be64.exe", "potplayermini64.exe", "wmplayer.exe",
+        "microsoft.media.player.exe", "video.ui.exe", "applicationframehost.exe", // windows media player, store apps like netflix
+        "powerpnt.exe", "discord.exe", "spotify.exe",
+    ];
+
     public static bool Matches(OverlayMode mode, ForegroundApp? foreground, IEnumerable<string> games) =>
         foreground is not null && mode switch
         {
-            OverlayMode.Fullscreen => foreground.IsFullscreen,
+            OverlayMode.Fullscreen => foreground.IsFullscreen && !NotGames.Contains(NormalizeExe(foreground.ExeName)),
             OverlayMode.GameList => games.Any(g => SameExe(g, foreground.ExeName)),
             _ => true,
         };
