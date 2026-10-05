@@ -23,8 +23,8 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
-    <!-- fps comes from intel presentmon, kept as a real file next to the exe since we run it as a process -->
-    <None Include="Tools\PresentMon.exe" CopyToOutputDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <!-- fps comes from intel presentmon, packed inside our exe and copied out on first use (see FpsMonitor) -->
+    <EmbeddedResource Include="Tools\PresentMon.exe" LogicalName="PresentMon.exe" />
   </ItemGroup>
 
   <ItemGroup>

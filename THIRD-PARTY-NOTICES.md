@@ -4,7 +4,7 @@ SkimStats bundles the following third-party software.
 
 ## PresentMon 2.6.0
 
-Used to measure FPS. Bundled unmodified as `Tools/PresentMon.exe`.
+Used to measure FPS. Bundled unmodified inside `SkimStats.exe` and copied to `%LocalAppData%\SkimStats\PresentMon.exe` when FPS is turned on.
 Source: https://github.com/GameTechDev/PresentMon
 
 ```

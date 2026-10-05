@@ -31,10 +31,9 @@
 
 ## Install
 
-1. Download `SkimStats-vX.Y.Z-win-x64.zip` from the [latest release](https://github.com/SkimMilkEXE/SkimStats/releases/latest).
-2. Unzip it anywhere and run `SkimStats.exe`. Keep the `Tools` folder next to the exe, since FPS tracking needs it.
+Download `SkimStats.exe` from the [latest release](https://github.com/SkimMilkEXE/SkimStats/releases/latest), put it anywhere and run it.
 
-Needs Windows 10 or 11 (64-bit). Nothing else to install, because .NET is bundled into the exe.
+Needs Windows 10 or 11 (64-bit). Nothing else to install, because .NET is bundled into the exe. Settings are saved in `%AppData%\SkimStats`, and the PresentMon helper used for FPS is copied to `%LocalAppData%\SkimStats` the first time FPS is turned on.
 
 Windows SmartScreen may warn you because the exe isn't code-signed. Click **More info → Run anyway**.
 
@@ -58,7 +57,7 @@ Needs the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
 ```powershell
 dotnet run --project src/SkimStats   # run
 dotnet test                          # run the tests
-.\publish.ps1                        # build the release zip into artifacts/
+.\publish.ps1                        # build the release exe into artifacts/
 ```
 
 ### Tech

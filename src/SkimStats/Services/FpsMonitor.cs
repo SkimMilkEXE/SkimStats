@@ -28,7 +28,9 @@ public sealed class FpsMonitor : IDisposable
     private const long StaleAfterMs = 2000;      // no frames for this long = app isn't drawing (minimized, paused)
     private const string PerformanceLogUsersSid = "S-1-5-32-559";
 
-    private static readonly string ExePath = Path.Combine(AppContext.BaseDirectory, "Tools", "PresentMon.exe");
+    // windows can only run a real file, so the copy packed in our exe gets written here
+    private static readonly string ExePath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SkimStats", "PresentMon.exe");
 
     // frame times per process, filled from presentmon's output thread
     private readonly object _lock = new();
@@ -62,7 +64,7 @@ public sealed class FpsMonitor : IDisposable
         if (Status == FpsStatus.Running)
             return;
 
-        if (!File.Exists(ExePath))
+        if (!ExtractPresentMon())
         {
             SetStatus(FpsStatus.Missing);
             return;
@@ -119,6 +121,30 @@ public sealed class FpsMonitor : IDisposable
         process.BeginErrorReadLine();
         _presentMon = process;
         SetStatus(FpsStatus.Running);
+    }
+
+    // copies presentmon out of our exe, skipped when the copy on disk already matches
+    // ponytail: matches by size only, compare a hash if a presentmon update ever keeps the same size
+    private static bool ExtractPresentMon()
+    {
+        using var packed = typeof(FpsMonitor).Assembly.GetManifestResourceStream("PresentMon.exe");
+        if (packed is null)
+            return false;
+        try
+        {
+            if (File.Exists(ExePath) && new FileInfo(ExePath).Length == packed.Length)
+                return true;
+            Directory.CreateDirectory(Path.GetDirectoryName(ExePath)!);
+            using var file = File.Create(ExePath);
+            packed.CopyTo(file);
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // a leftover presentmon still running locks the file, that copy is fine to use
+            Trace.WriteLine($"couldn't copy out presentmon: {ex.Message}");
+            return File.Exists(ExePath);
+        }
     }
 
     public void Stop()

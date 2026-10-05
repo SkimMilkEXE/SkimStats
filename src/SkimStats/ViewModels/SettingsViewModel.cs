@@ -210,7 +210,7 @@ public partial class SettingsViewModel : ViewModelBase
         {
             FpsStatus.Running => "Measuring the window in front, using Intel PresentMon.",
             FpsStatus.NeedsPermission => "Windows has to allow SkimStats to read frame timings. One-time setup, needs an admin prompt.",
-            FpsStatus.Missing => "PresentMon.exe is missing from the Tools folder, reinstall SkimStats.",
+            FpsStatus.Missing => "Couldn't set up PresentMon in your AppData folder. Try restarting SkimStats.",
             FpsStatus.Failed => "FPS tracking stopped unexpectedly. Turn it off and on again to retry.",
             _ => "Shows FPS for the window in front, using Intel PresentMon.",
         };

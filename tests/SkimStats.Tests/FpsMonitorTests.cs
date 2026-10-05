@@ -6,6 +6,16 @@ namespace SkimStats.Tests;
 [SupportedOSPlatform("windows")]
 public class FpsMonitorTests
 {
+    // the release is a single exe, so presentmon has to be packed inside it
+    [Fact]
+    public void PresentMonIsPackedInsideTheApp()
+    {
+        using var packed = typeof(FpsMonitor).Assembly.GetManifestResourceStream("PresentMon.exe");
+
+        Assert.NotNull(packed);
+        Assert.True(packed.Length > 100_000);
+    }
+
     [Fact]
     public void SteadyFrameTimesGiveMatchingFps()
     {
