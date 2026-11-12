@@ -169,19 +169,23 @@ public sealed class FpsMonitor : IDisposable
         _presentMon = null;
 
         // killing presentmon leaves its trace session behind, this asks windows to close it
-        try
+        // skipped during shutdown: new processes fail to start then (error popup) and the session dies with the reboot anyway
+        if (!Win32Interop.IsSessionEnding())
         {
-            using var cleanup = Process.Start(new ProcessStartInfo(ExePath,
-                $"--terminate_existing_session --session_name {SessionName}")
+            try
             {
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            });
-            cleanup?.WaitForExit(3000);
-        }
-        catch (Win32Exception ex)
-        {
-            Trace.WriteLine($"couldn't close presentmon session: {ex.Message}");
+                using var cleanup = Process.Start(new ProcessStartInfo(ExePath,
+                    $"--terminate_existing_session --session_name {SessionName}")
+                {
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                });
+                cleanup?.WaitForExit(3000);
+            }
+            catch (Win32Exception ex)
+            {
+                Trace.WriteLine($"couldn't close presentmon session: {ex.Message}");
+            }
         }
 
         lock (_lock)

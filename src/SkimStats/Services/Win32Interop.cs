@@ -34,6 +34,14 @@ public static class Win32Interop
         SetWindowLongPtr(hwnd, GWL_EXSTYLE, (IntPtr)style);
     }
 
+    private const int SM_SHUTTINGDOWN = 0x2000;
+
+    [DllImport("user32.dll")]
+    private static extern int GetSystemMetrics(int index);
+
+    // true while windows is logging off, restarting or shutting down
+    public static bool IsSessionEnding() => GetSystemMetrics(SM_SHUTTINGDOWN) != 0;
+
     // 64-bit only, fine since we ship win-x64
     [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
     private static extern IntPtr GetWindowLongPtr(IntPtr hwnd, int index);
